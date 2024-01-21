@@ -1,11 +1,6 @@
-streamlit
 altair<5
 pypdf2
 langchain==0.0.339
 python-dotenv
 faiss-cpu
-huggingface_hub
-# pydantic==1.10.9
-InstructorEmbedding
-sentence_transformers
 google-generativeai
