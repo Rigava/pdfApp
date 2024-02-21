@@ -64,8 +64,8 @@ def get_conversation_chain(vector_store):
     return conversation_chain
 
 def handle_user_input(question):
-    response = st.session_state.conversation({'question':question})
     question = "Provide a concise summary of the document"
+    response = st.session_state.conversation({'question':question})
     st.session_state.chat_history = response['chat_history']
     for i, message in enumerate(st.session_state.chat_history):
         # st.write(i,message
