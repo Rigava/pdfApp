@@ -91,7 +91,7 @@ def main():
         handle_user_input(user_question)
 
     st.write(user_template.replace("{{MSG}}","Hello bot"),unsafe_allow_html=True)
-    st.write(bot_template.replace("{{MSG}}","Hello Human"),unsafe_allow_html=True)
+    st.write(bot_template.replace("{{MSG}}","Hello Human, please upload your pdf file"),unsafe_allow_html=True)
     
     with st.sidebar:        
         pdf_docs = st.file_uploader("Upload your PDFs here and click to submit",accept_multiple_files=True)
