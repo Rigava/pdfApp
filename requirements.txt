@@ -1,6 +1,6 @@
 altair<5
 pypdf2
-langchain==0.0.208
+langchain==0.0.339
 python-dotenv
 faiss-cpu
 google-generativeai
