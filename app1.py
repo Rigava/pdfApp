@@ -1,3 +1,4 @@
+
 import streamlit as st
 from dotenv import load_dotenv
 from PyPDF2 import PdfReader
@@ -11,19 +12,22 @@ from langchain.chains import ConversationalRetrievalChain
 from langchain_community.llms import GooglePalm
 from htmlTemplates import bot_template, user_template, css
 from PIL import Image
+
+
+
 key =st.secrets.API_KEY
 def init():
     # Load the OpenAI API key from the environment variable
-    load_dotenv()
+    # load_dotenv()
     
     # test that the API key exists
-    if os.getenv("GOOGLE_API_KEY") is None or os.getenv("GOOGLE_API_KEY") == "":
-        print("API_TOKEN is not set")
-        exit(1)
-    else:
-        print("API_TOKEN is set")
+    # if os.getenv("GOOGLE_API_KEY") is None or os.getenv("GOOGLE_API_KEY") == "":
+    #     print("API_TOKEN is not set")
+    #     exit(1)
+    # else:
+    #     print("API_TOKEN is set")
     st.set_page_config(
-        page_title="Chat with your PDFs",
+        page_title="Summary tool",
         page_icon=":books"
     )
 
@@ -63,6 +67,7 @@ def get_conversation_chain(vector_store):
     return conversation_chain
 
 def handle_user_input(question):
+    question = "Provide a concise summary of the document"
     response = st.session_state.conversation({'question':question})
     st.session_state.chat_history = response['chat_history']
     for i, message in enumerate(st.session_state.chat_history):
@@ -72,14 +77,16 @@ def handle_user_input(question):
             st.write(user_template.replace("{{MSG}}", message.content), unsafe_allow_html=True)
         else:
             st.write(bot_template.replace("{{MSG}}", message.content), unsafe_allow_html=True)
+  
 
 def main():
     init()
     st.write(css,unsafe_allow_html=True)
 
-    st.header("Chat with your pdf :books:")
+    st.header("Summary of your pdf :books:")
     user_question = st.text_input("Ask a question about your document: ",key="user_input")
-    
+   
+
     if "conversation" not in st.session_state:
         st.session_state.conversation = None
 
@@ -89,7 +96,7 @@ def main():
         handle_user_input(user_question)
 
     st.write(user_template.replace("{{MSG}}","Hello bot"),unsafe_allow_html=True)
-    st.write(bot_template.replace("{{MSG}}","Hello Human"),unsafe_allow_html=True)
+    st.write(bot_template.replace("{{MSG}}","Hello Human. Please upload the file"),unsafe_allow_html=True)
     
     with st.sidebar:        
         pdf_docs = st.file_uploader("Upload your PDFs here and click to submit",accept_multiple_files=True)
@@ -107,9 +114,7 @@ def main():
 
 
 
+
+
 if __name__ == '__main__':
     main()
-
-                # docs= vectorstore.similarity_search(query)
-                # print(docs[2])
-                # print(len(docs))
