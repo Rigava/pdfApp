@@ -4,4 +4,5 @@ google-generativeai
 langchain==0.2.6
 langchain_community
 altair<5
-pydantic==1.10.9
+pydantic==2.7.4
+pydantic_core==2.18.4
