@@ -45,16 +45,7 @@ def get_vector_store(text_chunks):
     vectorstore = FAISS.from_texts(texts = text_chunks, embedding = embeddings)
     return vectorstore
 
-# def get_conversation_chain(vector_store):
-#     # ConversationalRetrievalChain
-#     llm = GooglePalm(model ='models/text-bison-001',google_api_key =key)
-#     memory = ConversationBufferMemory(memory_key='chat_history', return_messages=True)
-#     conversation_chain = ConversationalRetrievalChain.from_llm(
-#         llm = llm,
-#         retriever = vector_store.as_retriever(),
-#         memory = memory
-#     )
-#     return conversation_chain
+
 def get_conversation_chain(vector_store):
     # Load_qa_chain
     llm = GooglePalm(model ='models/text-bison-001',google_api_key =key)
