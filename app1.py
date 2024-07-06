@@ -16,6 +16,7 @@ from PIL import Image
 from langchain_community.chat_models.google_palm import ChatGooglePalm
 
 # Toggle to the secret keys when deploying in streamlit community
+
 key =st.secrets.API_KEY
 
 def init():
@@ -59,14 +60,14 @@ def get_conversation_chain(vector_store):
     )
     return conversation_chain
 
-def get_conversation_chain1(vector_store):
-    # Load_qa_chain
-    llm = ChatGooglePalm(model ='models/text-bison-001',google_api_key =key)
-    chain = load_qa_chain(llm=llm, chain_type="stuff")
-    query = "What is the summary"
-    docs = vector_store.similarity_search(query)
-    response=chain.run(input_documents=docs, question=query)
-    return response
+# def get_conversation_chain1(vector_store):
+#     # Load_qa_chain
+#     llm = ChatGooglePalm(model ='models/text-bison-001',google_api_key =key)
+#     chain = load_qa_chain(llm=llm, chain_type="stuff")
+#     query = "What is the summary"
+#     docs = vector_store.similarity_search(query)
+#     response=chain.run(input_documents=docs, question=query)
+#     return response
 
 def handle_user_input(question):
     question = "Provide a concise summary of the document"
@@ -111,10 +112,11 @@ def main():
                 #create vector store
                 vectorstore= get_vector_store(text_chunk)
                 #Create Conversation chain
-                st.session_state.conversation = get_conversation_chain(vectorstore)
                 st.success("Embedding done!")
-                res= get_conversation_chain1(vectorstore)
-                st.write(res)
+                st.session_state.conversation = get_conversation_chain(vectorstore)
+               
+                # res= get_conversation_chain1(vectorstore)
+                # st.write(res)
 
 
 
