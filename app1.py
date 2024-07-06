@@ -12,6 +12,7 @@ from langchain.chains import ConversationalRetrievalChain
 from langchain_community.llms import GooglePalm
 from htmlTemplates import bot_template, user_template, css
 from PIL import Image
+from langchain.chains.question_answering import load_qa_chain
 
 key =st.secrets.API_KEY
 def init():
@@ -44,16 +45,25 @@ def get_vector_store(text_chunks):
     vectorstore = FAISS.from_texts(texts = text_chunks, embedding = embeddings)
     return vectorstore
 
+# def get_conversation_chain(vector_store):
+#     # ConversationalRetrievalChain
+#     llm = GooglePalm(model ='models/text-bison-001',google_api_key =key)
+#     memory = ConversationBufferMemory(memory_key='chat_history', return_messages=True)
+#     conversation_chain = ConversationalRetrievalChain.from_llm(
+#         llm = llm,
+#         retriever = vector_store.as_retriever(),
+#         memory = memory
+#     )
+#     return conversation_chain
 def get_conversation_chain(vector_store):
-    # HuggingFace Model
+    # Load_qa_chain
     llm = GooglePalm(model ='models/text-bison-001',google_api_key =key)
-    memory = ConversationBufferMemory(memory_key='chat_history', return_messages=True)
-    conversation_chain = ConversationalRetrievalChain.from_llm(
-        llm = llm,
-        retriever = vector_store.as_retriever(),
-        memory = memory
-    )
-    return conversation_chain
+    chain = load_qa_chain(llm=llm, chain_type="stuff")
+    query = "What is the summary"
+    docs = vector_store.similarity_search(query)
+    
+    
+    return chain.run(input_documents=docs, question=query)
 
 def handle_user_input(question):
     question = "Provide a concise summary of the document"
