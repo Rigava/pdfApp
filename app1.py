@@ -11,7 +11,7 @@ from langchain.chains import ConversationalRetrievalChain
 from langchain_community.llms import GooglePalm
 from htmlTemplates import bot_template, user_template, css
 from PIL import Image
-
+key =st.secrets.API_KEY
 def init():
     # Load the OpenAI API key from the environment variable
     load_dotenv()
@@ -53,7 +53,7 @@ def get_vector_store(text_chunks):
 
 def get_conversation_chain(vector_store):
     # HuggingFace Model
-    llm = GooglePalm(model ='models/gemini-1.0-pro')
+    llm = GooglePalm(model ='models/gemini-1.0-pro',google_api_key =key)
     memory = ConversationBufferMemory(memory_key='chat_history', return_messages=True)
     conversation_chain = ConversationalRetrievalChain.from_llm(
         llm = llm,
