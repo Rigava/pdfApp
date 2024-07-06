@@ -16,7 +16,6 @@ from PIL import Image
 from langchain_community.chat_models.google_palm import ChatGooglePalm
 
 # Toggle to the secret keys when deploying in streamlit community
-
 key =st.secrets.API_KEY
 
 def init():
@@ -62,7 +61,7 @@ def get_conversation_chain(vector_store):
 
 def get_conversation_chain1(vector_store):
     # Load_qa_chain
-    llm = GooglePalm(model ='models/text-bison-001',google_api_key =key)
+    llm = ChatGooglePalm(model ='models/text-bison-001',google_api_key =key)
     chain = load_qa_chain(llm=llm, chain_type="stuff")
     query = "What is the summary"
     docs = vector_store.similarity_search(query)
