@@ -51,7 +51,7 @@ def get_text_chunks(text):
 
 def get_vector_store(text_chunks):  
     # For Huggingface Embeddings
-    embeddings = GooglePalmEmbeddings()
+    embeddings = GooglePalmEmbeddings(google_api_key =key)
     vectorstore = FAISS.from_texts(texts = text_chunks, embedding = embeddings)
     return vectorstore
 
