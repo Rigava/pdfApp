@@ -46,7 +46,7 @@ def get_vector_store(text_chunks):
 
 def get_conversation_chain(vector_store):
     # HuggingFace Model
-    llm = GooglePalm(model ='models/gemini-1.0-pro',google_api_key =key)
+    llm = GooglePalm(model ='models/text-bison-001',google_api_key =key)
     memory = ConversationBufferMemory(memory_key='chat_history', return_messages=True)
     conversation_chain = ConversationalRetrievalChain.from_llm(
         llm = llm,
