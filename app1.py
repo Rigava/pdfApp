@@ -13,19 +13,8 @@ from langchain_community.llms import GooglePalm
 from htmlTemplates import bot_template, user_template, css
 from PIL import Image
 
-
-
 key =st.secrets.API_KEY
 def init():
-    # Load the OpenAI API key from the environment variable
-    # load_dotenv()
-    
-    # test that the API key exists
-    # if os.getenv("GOOGLE_API_KEY") is None or os.getenv("GOOGLE_API_KEY") == "":
-    #     print("API_TOKEN is not set")
-    #     exit(1)
-    # else:
-    #     print("API_TOKEN is set")
     st.set_page_config(
         page_title="Summary tool",
         page_icon=":books"
@@ -51,7 +40,7 @@ def get_text_chunks(text):
 
 def get_vector_store(text_chunks):  
     # For Huggingface Embeddings
-    embeddings = GooglePalmEmbeddings(google_api_key =key)
+    embeddings = GooglePalmEmbeddings('models/gemini-1.0-pro',google_api_key =key)
     vectorstore = FAISS.from_texts(texts = text_chunks, embedding = embeddings)
     return vectorstore
 
