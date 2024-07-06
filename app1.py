@@ -13,6 +13,7 @@ from langchain.chains.question_answering import load_qa_chain
 from langchain_community.llms import GooglePalm
 from htmlTemplates import bot_template, user_template, css
 from PIL import Image
+from langchain_community.chat_models.google_palm import ChatGooglePalm
 
 # Toggle to the secret keys when deploying in streamlit community
 
@@ -50,7 +51,7 @@ def get_vector_store(text_chunks):
 
 def get_conversation_chain(vector_store):
     # ConversationalRetrievalChain
-    llm = GooglePalm(model ='models/gemini-1.0-pro',google_api_key =key)
+    llm = ChatGooglePalm(model ='models/gemini-1.0-pro',google_api_key =key)
     memory = ConversationBufferMemory(memory_key='chat_history', return_messages=True)
     conversation_chain = ConversationalRetrievalChain.from_llm(
         llm = llm,
@@ -68,6 +69,18 @@ def get_conversation_chain1(vector_store):
     response=chain.run(input_documents=docs, question=query)
     return response
 
+def handle_user_input(question):
+    question = "Provide a concise summary of the document"
+    response = st.session_state.conversation({'question':question})
+    st.session_state.chat_history = response['chat_history']
+    for i, message in enumerate(st.session_state.chat_history):
+        # st.write(i,message
+        #          )
+        if i % 2 == 0:
+            st.write(user_template.replace("{{MSG}}", message.content), unsafe_allow_html=True)
+        else:
+            st.write(bot_template.replace("{{MSG}}", message.content), unsafe_allow_html=True)
+  
 
 def main():
     init()
@@ -82,7 +95,8 @@ def main():
 
     if "chat_history" not in st.session_state:
         st.session_state.chat_history = None
-
+    if user_question:
+        handle_user_input(user_question)
 
     st.write(user_template.replace("{{MSG}}","Hello bot"),unsafe_allow_html=True)
     st.write(bot_template.replace("{{MSG}}","Hello Human. Please upload the file"),unsafe_allow_html=True)
@@ -98,6 +112,7 @@ def main():
                 #create vector store
                 vectorstore= get_vector_store(text_chunk)
                 #Create Conversation chain
+                st.session_state.conversation = get_conversation_chain(vectorstore)
                 st.success("Embedding done!")
                 res= get_conversation_chain1(vectorstore)
                 st.write(res)
