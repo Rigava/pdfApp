@@ -12,7 +12,9 @@ from langchain_community.llms import GooglePalm
 from htmlTemplates import bot_template, user_template, css
 from PIL import Image
 # from tabula import read_pdf
-import io
+# import io
+from langchain_community.document_loaders import PyPDFLoader
+
 key =st.secrets.API_KEY
 
 def init():
@@ -28,12 +30,14 @@ def init():
 #         for page in pdf_reader.pages:
 #             text += page.extract_text()
 #     return text
-def get_pdf_text(doc):
+def get_pdf_text(url):
+    loader = PyPDFLoader(url)
+    pages = loader.load_and_split()
     text_list = []
-    pdf = PdfReader(doc)
-    num_pages = len(pdf.pages)
+    # pdf = PdfReader(doc)
+    # num_pages = len(pdf.pages)
 
-    for page in range(num_pages):
+    for page in range(pages):
         page_text = pdf.pages[page].extract_text()
         text_list.append(page_text)
     text = "\n".join(text_list)
@@ -99,14 +103,15 @@ def main():
         # pdf_docs = st.file_uploader("Upload your PDFs here and click to submit",accept_multiple_files=True)     
         # if pdf_file is not None:
         url = "https://raw.githubusercontent.com/Rigava/DataRepo/main/FuelEU_faq_2_e[1].pdf"
-        download = requests.get(url).content
-        pdf_docs = io.BytesIO(download)
+        # download = requests.get(url).content
+        # pdf_docs = io.BytesIO(download)
+
 
                 
         if st.button("Submit"):
            with st.spinner("processing"):
                 #get the pdfs to text
-                raw_text = get_pdf_text(pdf_docs)
+                raw_text = get_pdf_text(url)
                 #get the text chunk
                 text_chunk = get_text_chunks(raw_text)
                 #create vector store
