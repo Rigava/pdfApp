@@ -1,6 +1,6 @@
 import streamlit as st
 import requests
-from PyPDF2 import PdfReader
+from pypdf import PdfReader
 import os
 import google.generativeai as palm
 from langchain.text_splitter import CharacterTextSplitter
