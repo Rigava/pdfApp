@@ -1,4 +1,4 @@
-pypdf2
+pypdf
 faiss-cpu
 google-generativeai
 langchain==0.2.6
