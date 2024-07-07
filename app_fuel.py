@@ -1,5 +1,5 @@
 import streamlit as st
-from dotenv import load_dotenv
+
 from PyPDF2 import PdfReader
 import os
 import google.generativeai as palm
