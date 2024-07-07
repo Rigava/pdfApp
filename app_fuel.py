@@ -85,11 +85,11 @@ def main():
     st.write(bot_template.replace("{{MSG}}","Hello Human"),unsafe_allow_html=True)
     
     with st.sidebar:        
-        pdf_docs = st.file_uploader("Upload your PDFs here and click to submit",accept_multiple_files=True)     
-        if pdf_file is not None:
-            save_image_path = './FuelEU_faq_2_e[1].pdf'
-            with open(save_image_path, "wb") as f:
-                f.write(pdf_file.getbuffer())
+        # pdf_docs = st.file_uploader("Upload your PDFs here and click to submit",accept_multiple_files=True)     
+        # if pdf_file is not None:
+        save_image_path = './FuelEU_faq_2_e[1].pdf'
+        with open(save_image_path, "wb") as f:
+            f.write(pdf_file.getbuffer())
         show_pdf(save_image_path)
                 
         if st.button("Submit"):
