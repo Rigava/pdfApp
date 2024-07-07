@@ -87,10 +87,10 @@ def main():
     with st.sidebar:        
         # pdf_docs = st.file_uploader("Upload your PDFs here and click to submit",accept_multiple_files=True)     
         # if pdf_file is not None:
-        save_image_path = './FuelEU_faq_2_e[1].pdf'
-        with open(save_image_path, "wb") as f:
-            f.write(pdf_file.getbuffer())
-        show_pdf(save_image_path)
+        url = "https://raw.githubusercontent.com/Rigava/DataRepo/main/FuelEU_faq_2_e[1].pdf"
+        download = requests.get(url).content
+        pdf_docs = pd.read_pdf(io.StringIO(download.decode('utf-8')))
+
                 
         if st.button("Submit"):
            with st.spinner("processing"):
