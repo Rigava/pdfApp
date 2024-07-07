@@ -30,7 +30,7 @@ def init():
 #     return text
 def get_pdf_text(doc):
     text_list = []
-    pdf = PyPDF2.PdfReader(doc)
+    pdf = PdfReader(doc)
     num_pages = len(pdf.pages)
 
     for page in range(num_pages):
