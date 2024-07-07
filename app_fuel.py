@@ -87,8 +87,7 @@ def main():
     with st.sidebar:        
         pdf_docs = st.file_uploader("Upload your PDFs here and click to submit",accept_multiple_files=True)     
         if pdf_file is not None:
-            pdf_file
-            save_image_path = './Uploaded_Docs/'+pdf_file.name
+            save_image_path = './FuelEU_faq_2_e[1].pdf'
             with open(save_image_path, "wb") as f:
                 f.write(pdf_file.getbuffer())
         show_pdf(save_image_path)
@@ -110,6 +109,3 @@ def main():
 if __name__ == '__main__':
     main()
 
-                # docs= vectorstore.similarity_search(query)
-                # print(docs[2])
-                # print(len(docs))
