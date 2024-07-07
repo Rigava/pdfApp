@@ -11,7 +11,8 @@ from langchain.chains import ConversationalRetrievalChain
 from langchain_community.llms import GooglePalm
 from htmlTemplates import bot_template, user_template, css
 from PIL import Image
-from tabula import read_pdf
+# from tabula import read_pdf
+import io
 key =st.secrets.API_KEY
 
 def init():
