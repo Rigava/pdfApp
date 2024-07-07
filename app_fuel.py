@@ -11,7 +11,7 @@ from langchain.chains import ConversationalRetrievalChain
 from langchain_community.llms import GooglePalm
 from htmlTemplates import bot_template, user_template, css
 from PIL import Image
-
+from tabula import read_pdf
 key =st.secrets.API_KEY
 
 def init():
@@ -89,7 +89,7 @@ def main():
         # if pdf_file is not None:
         url = "https://raw.githubusercontent.com/Rigava/DataRepo/main/FuelEU_faq_2_e[1].pdf"
         download = requests.get(url).content
-        pdf_docs = pd.read_pdf(io.StringIO(download.decode('utf-8')))
+        pdf_docs = read_pdf(io.StringIO(download.decode('utf-8')))
 
                 
         if st.button("Submit"):
