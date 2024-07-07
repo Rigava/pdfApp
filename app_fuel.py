@@ -12,16 +12,9 @@ from langchain_community.llms import GooglePalm
 from htmlTemplates import bot_template, user_template, css
 from PIL import Image
 
+key =st.secrets.API_KEY
+
 def init():
-    # Load the OpenAI API key from the environment variable
-    load_dotenv()
-    
-    # test that the API key exists
-    if os.getenv("GOOGLE_API_KEY") is None or os.getenv("GOOGLE_API_KEY") == "":
-        print("API_TOKEN is not set")
-        exit(1)
-    else:
-        print("API_TOKEN is set")
     st.set_page_config(
         page_title="Chat with your PDFs",
         page_icon=":books"
@@ -92,7 +85,14 @@ def main():
     st.write(bot_template.replace("{{MSG}}","Hello Human"),unsafe_allow_html=True)
     
     with st.sidebar:        
-        pdf_docs = st.file_uploader("Upload your PDFs here and click to submit",accept_multiple_files=True)
+        pdf_docs = st.file_uploader("Upload your PDFs here and click to submit",accept_multiple_files=True)     
+        if pdf_file is not None:
+            pdf_file
+            save_image_path = './Uploaded_Docs/'+pdf_file.name
+            with open(save_image_path, "wb") as f:
+                f.write(pdf_file.getbuffer())
+        show_pdf(save_image_path)
+                
         if st.button("Submit"):
            with st.spinner("processing"):
                 #get the pdfs to text
