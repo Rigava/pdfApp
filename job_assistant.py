@@ -11,7 +11,7 @@ import streamlit as st
 
 # Toggle to the secret keys when deploying in streamlit community
 
-# key =st.secrets.API_KEY
+key =st.secrets.API_KEY
 
 # main functions
 def split_text_documents(docs: list):
@@ -144,7 +144,7 @@ def main():
 
   try:
      # Retrieve the OpenAI API key from the environment variable
-      key = "AIzaSyAKEaaM7fWIErN3VbikjP_T5m0UfhBy5iE"
+      key =st.secrets.API_KEY
   except:
       key = ''
      
