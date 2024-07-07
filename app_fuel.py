@@ -88,8 +88,9 @@ def main():
         # pdf_docs = st.file_uploader("Upload your PDFs here and click to submit",accept_multiple_files=True)     
         # if pdf_file is not None:
         url = "https://raw.githubusercontent.com/Rigava/DataRepo/main/FuelEU_faq_2_e[1].pdf"
-        download = requests.get(url).content
-        pdf_docs = read_pdf(io.StringIO(download.decode('utf-8')))
+        # download = requests.get(url).content
+        # pdf_docs = read_pdf(io.StringIO(download.decode('utf-8')))
+        pdf_docs = read_pdf(url,pages='all')
 
                 
         if st.button("Submit"):
