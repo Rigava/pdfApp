@@ -21,12 +21,22 @@ def init():
         page_icon=":books"
     )
 
+# def get_pdf_text(doc):
+#     text = ""
+#     for pdf in doc:
+#         pdf_reader=PdfReader(pdf) # read each page
+#         for page in pdf_reader.pages:
+#             text += page.extract_text()
+#     return text
 def get_pdf_text(doc):
-    text = ""
-    for pdf in doc:
-        pdf_reader=PdfReader(pdf) # read each page
-        for page in pdf_reader.pages:
-            text += page.extract_text()
+    text_list = []
+    pdf = PyPDF2.PdfReader(doc)
+    num_pages = len(pdf.pages)
+
+    for page in range(num_pages):
+        page_text = pdf.pages[page].extract_text()
+        text_list.append(page_text)
+    text = "\n".join(text_list)
     return text
 
 def get_text_chunks(text):
