@@ -2,7 +2,7 @@ from PyPDF2 import PdfReader
 from bs4 import BeautifulSoup
 import requests
 from langchain.text_splitter import RecursiveCharacterTextSplitter
-from langchain_openai import OpenAIEmbeddings # Updated Embedding Package Here... Causes problems otherwise. (UUID cannot be imported.)
+
 from langchain_community.vectorstores import FAISS
 from langchain_community.embeddings import GooglePalmEmbeddings
 from langchain_community.chat_models.google_palm import ChatGooglePalm
