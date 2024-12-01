@@ -2,16 +2,19 @@ from PyPDF2 import PdfReader
 from bs4 import BeautifulSoup
 import requests
 from langchain.text_splitter import RecursiveCharacterTextSplitter
-
+ # Updated Embedding Package Here... Causes problems otherwise. (UUID cannot be imported.)
 from langchain_community.vectorstores import FAISS
-from langchain_community.embeddings import GooglePalmEmbeddings
-from langchain_community.chat_models.google_palm import ChatGooglePalm
+from langchain_community.embeddings import GPT4AllEmbeddings
+from langchain_groq import ChatGroq
 from langchain.chains import RetrievalQA
 import streamlit as st
+from langchain_community.document_loaders import WebBaseLoader
 
 # Toggle to the secret keys when deploying in streamlit community
 
-key =st.secrets.API_KEY
+# key =st.secrets.API_KEY
+groq_key = "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"
+
 
 # main functions
 def split_text_documents(docs: list):
@@ -26,16 +29,11 @@ def text_to_doc_splitter(text: str):
 
 def extract_text_from_url(url):
     html = requests.get(url).text
-    soup = BeautifulSoup(html, features="html.parser")
-    text = []
-    for lines in soup.findAll('div', {'class': 'description__text'}):
-        text.append(lines.get_text())
-    
-    lines = (line.strip() for line in text)
-    text = '\n'.join(line for line in lines if line)
-    
+    loader = WebBaseLoader(url)
+    text = loader.load().pop().page_content
     document = text_to_doc_splitter(text)
     return document
+
 
 def load_pdf(pdf):
     pdf_reader = PdfReader(pdf)
@@ -53,10 +51,12 @@ def run_llm(url, pdf,key, temperature):
 
     pdf_doc.extend(job_post)
     documents = split_text_documents(pdf_doc)    
-    embeddings = GooglePalmEmbeddings(google_api_key =key)
+    embeddings = GPT4AllEmbeddings()
     vectordb = FAISS.from_documents(documents, embedding = embeddings)
-    llm = ChatGooglePalm(model ='models/gemini-1.0-pro',google_api_key =key,temperature=temperature)
-
+    llm = ChatGroq(
+    temperature=0,
+    groq_api_key = key,
+    model_name = 'llama-3.1-70b-versatile')
     pdf_qa = RetrievalQA.from_chain_type(
         llm=llm,
         retriever=vectordb.as_retriever(search_kwargs={'k': 4}),
@@ -144,7 +144,7 @@ def main():
 
   try:
      # Retrieve the OpenAI API key from the environment variable
-      key =st.secrets.API_KEY
+      key = groq_key
   except:
       key = ''
      
@@ -185,7 +185,7 @@ def main():
       submitted = st.form_submit_button('Submit')
           
   if submitted:
-      if key != '' and key.startswith('AI'):
+      if key != '' and key.startswith('gsk'):
         if text != '':
           if files != None:
             #try:
