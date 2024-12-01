@@ -10,3 +10,5 @@ bs4
 requests
 tabula-py
 pycryptodome==3.15.0
+gpt4all
+langchain-groq
