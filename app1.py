@@ -1,27 +1,29 @@
 # D:\GEN AI_HUGGINGFACE\pdfApp
 import streamlit as st
-
+from dotenv import load_dotenv
 from PyPDF2 import PdfReader
 import os
-import google.generativeai as palm
-from langchain.text_splitter import CharacterTextSplitter
-from langchain_community.embeddings import GooglePalmEmbeddings
-from langchain_community.vectorstores import FAISS
+from langchain.text_splitter import RecursiveCharacterTextSplitter
+from langchain_community.embeddings import GPT4AllEmbeddings
+from langchain_community.vectorstores import SKLearnVectorStore
 from langchain.memory import ConversationBufferMemory
 from langchain.chains import ConversationalRetrievalChain
-from langchain.chains.question_answering import load_qa_chain
-from langchain_community.llms import GooglePalm
+from langchain_groq import ChatGroq
 from htmlTemplates import bot_template, user_template, css
 from PIL import Image
-from langchain_community.chat_models.google_palm import ChatGooglePalm
-
-# Toggle to the secret keys when deploying in streamlit community
-
-key =st.secrets.API_KEY
 
 def init():
+    # Load the OpenAI API key from the environment variable
+    load_dotenv()
+    
+    # test that the API key exists
+    if os.getenv("GROQ_API_KEY") is None or os.getenv("GROQ_API_KEY") == "":
+        print("API_TOKEN is not set")
+        exit(1)
+    else:
+        print("API_TOKEN is set")
     st.set_page_config(
-        page_title="Summary tool",
+        page_title="Chat with your PDFs",
         page_icon=":books"
     )
 
@@ -34,24 +36,21 @@ def get_pdf_text(doc):
     return text
 
 def get_text_chunks(text):
-    text_splitter=CharacterTextSplitter(
-        separator="\n",
-        chunk_size=1000,
-        chunk_overlap=200,
-        length_function=len
-    )
-    chunks = text_splitter.split_text(text)
+    text_splitter=RecursiveCharacterTextSplitter(chunk_size=1000,chunk_overlap=24,separators=[" ", ",", "\n"])
+    chunks = text_splitter.create_documents([text])
     return chunks
 
 def get_vector_store(text_chunks):  
     # For Huggingface Embeddings
-    embeddings = GooglePalmEmbeddings(google_api_key =key)
-    vectorstore = FAISS.from_texts(texts = text_chunks, embedding = embeddings)
+    embeddings = GPT4AllEmbeddings()
+    vectorstore = SKLearnVectorStore.from_documents(text_chunks, embeddings)
     return vectorstore
 
 def get_conversation_chain(vector_store):
-    # ConversationalRetrievalChain
-    llm = ChatGooglePalm(model ='models/gemini-1.0-pro',google_api_key =key)
+    llm = ChatGroq(
+    temperature=0,
+    groq_api_key = "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",
+    model_name = 'llama-3.1-70b-versatile')
     memory = ConversationBufferMemory(memory_key='chat_history', return_messages=True)
     conversation_chain = ConversationalRetrievalChain.from_llm(
         llm = llm,
@@ -59,15 +58,17 @@ def get_conversation_chain(vector_store):
         memory = memory
     )
     return conversation_chain
+# def get_conversation_chain(vector_store):
+#     # ConversationalRetrievalChain
+#     llm = ChatGooglePalm(model ='models/gemini-1.0-pro',google_api_key =key)
+#     memory = ConversationBufferMemory(memory_key='chat_history', return_messages=True)
+#     conversation_chain = ConversationalRetrievalChain.from_llm(
+#         llm = llm,
+#         retriever = vector_store.as_retriever(),
+#         memory = memory
+#     )
+#     return conversation_chain
 
-# def get_conversation_chain1(vector_store):
-#     # Load_qa_chain
-#     llm = ChatGooglePalm(model ='models/text-bison-001',google_api_key =key)
-#     chain = load_qa_chain(llm=llm, chain_type="stuff")
-#     query = "What is the summary"
-#     docs = vector_store.similarity_search(query)
-#     response=chain.run(input_documents=docs, question=query)
-#     return response
 
 def handle_user_input(question):
     question = "Provide a concise summary of the document"
