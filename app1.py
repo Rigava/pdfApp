@@ -13,6 +13,7 @@ from langchain_groq import ChatGroq
 from htmlTemplates import bot_template, user_template, css
 from PIL import Image
 
+HUGGINGFACEHUB_API_TOKEN = "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"
 key =st.secrets.API_KEY
 def init():
     # Load the OpenAI API key from the environment variable
