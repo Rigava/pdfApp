@@ -12,12 +12,13 @@ from langchain_groq import ChatGroq
 from htmlTemplates import bot_template, user_template, css
 from PIL import Image
 
+key =st.secrets.API_KEY
 def init():
     # Load the OpenAI API key from the environment variable
     load_dotenv()
     
     # test that the API key exists
-    if os.getenv("GROQ_API_KEY") is None or os.getenv("GROQ_API_KEY") == "":
+    if key is None or key == "":
         print("API_TOKEN is not set")
         exit(1)
     else:
@@ -49,7 +50,7 @@ def get_vector_store(text_chunks):
 def get_conversation_chain(vector_store):
     llm = ChatGroq(
     temperature=0,
-    groq_api_key = "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",
+    groq_api_key = key,
     model_name = 'llama-3.1-70b-versatile')
     memory = ConversationBufferMemory(memory_key='chat_history', return_messages=True)
     conversation_chain = ConversationalRetrievalChain.from_llm(
