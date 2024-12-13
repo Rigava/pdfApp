@@ -13,7 +13,7 @@ from langchain_groq import ChatGroq
 from htmlTemplates import bot_template, user_template, css
 from PIL import Image
 
-# HUGGINGFACEHUB_API_TOKEN = "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"
+
 key =st.secrets.API_KEY
 def init():
     # Load the OpenAI API key from the environment variable
@@ -90,7 +90,7 @@ def main():
     init()
     st.write(css,unsafe_allow_html=True)
 
-    st.header("Summary of your pdf :books:")
+    st.header("Talk to your pdf :books:")
     user_question = st.text_input("Ask a question about your document: ",key="user_input")
    
 
