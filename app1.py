@@ -4,8 +4,8 @@ from dotenv import load_dotenv
 from PyPDF2 import PdfReader
 import os
 from langchain.text_splitter import RecursiveCharacterTextSplitter
-from langchain.embeddings import GPT4AllEmbeddings
-# from langchain_community.embeddings import HuggingFaceEmbeddings
+# from langchain.embeddings import GPT4AllEmbeddings
+from langchain_community.embeddings import HuggingFaceEmbeddings
 from langchain_community.vectorstores import SKLearnVectorStore
 from langchain.memory import ConversationBufferMemory
 from langchain.chains import ConversationalRetrievalChain
@@ -44,7 +44,7 @@ def get_text_chunks(text):
 
 def get_vector_store(text_chunks):  
     # For Huggingface Embeddings
-    embeddings = GPT4AllEmbeddings()
+    embeddings = HuggingFaceEmbeddings()
     vectorstore = SKLearnVectorStore.from_documents(text_chunks, embeddings)
     return vectorstore
 
