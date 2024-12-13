@@ -73,8 +73,19 @@ def get_conversation_chain(vector_store):
 #     return conversation_chain
 
 
+# def handle_user_input(question):
+#     question = "Provide a concise summary of the document"
+#     response = st.session_state.conversation({'question':question})
+#     st.session_state.chat_history = response['chat_history']
+#     for i, message in enumerate(st.session_state.chat_history):
+#         # st.write(i,message
+#         #          )
+#         if i % 2 == 0:
+#             st.write(user_template.replace("{{MSG}}", message.content), unsafe_allow_html=True)
+#         else:
+#             st.write(bot_template.replace("{{MSG}}", message.content), unsafe_allow_html=True)
+
 def handle_user_input(question):
-    question = "Provide a concise summary of the document"
     response = st.session_state.conversation({'question':question})
     st.session_state.chat_history = response['chat_history']
     for i, message in enumerate(st.session_state.chat_history):
@@ -84,7 +95,7 @@ def handle_user_input(question):
             st.write(user_template.replace("{{MSG}}", message.content), unsafe_allow_html=True)
         else:
             st.write(bot_template.replace("{{MSG}}", message.content), unsafe_allow_html=True)
-  
+
 
 def main():
     init()
