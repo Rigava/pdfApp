@@ -4,7 +4,7 @@ import requests
 from langchain.text_splitter import RecursiveCharacterTextSplitter
  # Updated Embedding Package Here... Causes problems otherwise. (UUID cannot be imported.)
 from langchain_community.vectorstores import FAISS
-from langchain_community.embeddings import GPT4AllEmbeddings
+from langchain_community.embeddings import HuggingFaceEmbeddings
 from langchain_groq import ChatGroq
 from langchain.chains import RetrievalQA
 import streamlit as st
@@ -51,7 +51,7 @@ def run_llm(url, pdf,key, temperature):
 
     pdf_doc.extend(job_post)
     documents = split_text_documents(pdf_doc)    
-    embeddings = GPT4AllEmbeddings()
+    embeddings = HuggingFaceEmbeddings()
     vectordb = FAISS.from_documents(documents, embedding = embeddings)
     llm = ChatGroq(
     temperature=0,
