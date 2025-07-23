@@ -53,7 +53,7 @@ def get_conversation_chain(vector_store):
     llm = ChatGroq(
     temperature=0,
     groq_api_key = key,
-    model_name = 'llama-3.1-70b-versatile')
+    model_name = 'llama-3.3-70b-versatile')
     memory = ConversationBufferMemory(memory_key='chat_history', return_messages=True)
     conversation_chain = ConversationalRetrievalChain.from_llm(
         llm = llm,
