@@ -193,4 +193,4 @@ if question and "retriever" in st.session_state:
                     f"Page {doc.metadata['page']} | "
                     f"Chunk {doc.metadata['chunk_id']}**"
                 )
-            st.write(doc.page_content[:500] + "...")
+        st.write(doc.page_content[:500] + "...")
