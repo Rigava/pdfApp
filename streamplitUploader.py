@@ -1,81 +1,109 @@
 import streamlit as st
 import json
-import nltk
 import tiktoken
+import nltk
+import re
 from PyPDF2 import PdfReader
 from nltk.tokenize import sent_tokenize
-from io import BytesIO
+
+#Run it once
 nltk.download('punkt_tab')
+
 # ---------------- CONFIG ----------------
 MODEL_NAME = "text-embedding-3-large"
 encoding = tiktoken.encoding_for_model(MODEL_NAME)
 
-# ---------------- FUNCTIONS ----------------
-def sentence_aware_token_chunks(text, max_tokens=600, overlap_tokens=80):
-    sentences = sent_tokenize(text)
+# ---------------- HELPERS ----------------
+def is_heading(line):
+    line = line.strip()
+    return (
+        line.isupper()
+        or bool(re.match(r"^\d+(\.\d+)*\s+", line))
+        or (len(line.split()) <= 6 and not line.endswith("."))
+    )
 
-    chunks = []
-    current_chunk = []
-    current_tokens = 0
+def extract_sentences_with_metadata(pdf_file):
+    reader = PdfReader(pdf_file)
+    data = []
 
-    for sentence in sentences:
-        sentence_tokens = len(encoding.encode(sentence))
+    current_section = "UNKNOWN"
 
-        if sentence_tokens > max_tokens:
+    for page_num, page in enumerate(reader.pages, start=1):
+        text = page.extract_text()
+        if not text:
             continue
 
-        if current_tokens + sentence_tokens > max_tokens:
-            chunks.append({
-                "text": " ".join(current_chunk),
-                "token_count": current_tokens
-            })
+        lines = text.split("\n")
+        for line in lines:
+            if is_heading(line):
+                current_section = line.strip()
 
-            # overlap logic (sentence-level)
-            overlap_sentences = []
-            overlap_token_count = 0
-            for s in reversed(current_chunk):
-                s_tokens = len(encoding.encode(s))
-                if overlap_token_count + s_tokens <= overlap_tokens:
-                    overlap_sentences.insert(0, s)
-                    overlap_token_count += s_tokens
+            sentences = sent_tokenize(line)
+            for sentence in sentences:
+                data.append({
+                    "sentence": sentence,
+                    "page": page_num,
+                    "section": current_section
+                })
+
+    return data
+
+
+def sentence_aware_token_chunks(sentences, max_tokens=600, overlap_tokens=80):
+    chunks = []
+    current = []
+    current_tokens = 0
+
+    for item in sentences:
+        sent = item["sentence"]
+        sent_tokens = len(encoding.encode(sent))
+
+        if sent_tokens > max_tokens:
+            continue
+
+        if current_tokens + sent_tokens > max_tokens:
+            chunks.append(build_chunk(current, current_tokens))
+
+            # overlap logic
+            overlap = []
+            overlap_tokens_used = 0
+            for s in reversed(current):
+                s_tokens = len(encoding.encode(s["sentence"]))
+                if overlap_tokens_used + s_tokens <= overlap_tokens:
+                    overlap.insert(0, s)
+                    overlap_tokens_used += s_tokens
                 else:
                     break
 
-            current_chunk = overlap_sentences.copy()
-            current_tokens = overlap_token_count
+            current = overlap.copy()
+            current_tokens = overlap_tokens_used
 
-        current_chunk.append(sentence)
-        current_tokens += sentence_tokens
+        current.append(item)
+        current_tokens += sent_tokens
 
-    if current_chunk:
-        chunks.append({
-            "text": " ".join(current_chunk),
-            "token_count": current_tokens
-        })
+    if current:
+        chunks.append(build_chunk(current, current_tokens))
 
     return chunks
 
 
-def extract_text_from_pdf(uploaded_file):
-    reader = PdfReader(uploaded_file)
-    text = ""
-
-    for page in reader.pages:
-        page_text = page.extract_text()
-        if page_text:
-            text += page_text + "\n"
-
-    return text
-
+def build_chunk(sent_items, token_count):
+    return {
+        "text": " ".join(s["sentence"] for s in sent_items),
+        "token_count": token_count,
+        "page_start": sent_items[0]["page"],
+        "page_end": sent_items[-1]["page"],
+        "section": sent_items[-1]["section"]
+    }
 
 # ---------------- STREAMLIT UI ----------------
-st.set_page_config(page_title="PDF → LLM Chunker", layout="wide")
+st.set_page_config(page_title="PDF → LLM Chunker (Metadata)", layout="wide")
 
 st.title("📄 PDF to LLM-Ready Chunks")
-st.caption("Sentence-aware • Token-based • RAG-ready")
+st.caption("Sentence-aware • Token-based • Page & Section metadata")
 
 uploaded_files = st.file_uploader(
-    "Upload one or more PDFs",
+    "Upload PDF files",
     type=["pdf"],
     accept_multiple_files=True
 )
@@ -86,45 +114,35 @@ with col1:
 with col2:
     overlap_tokens = st.slider("Overlap tokens", 0, 200, 80)
 
-if uploaded_files:
-    if st.button("🚀 Process PDFs"):
-        all_chunks = []
-        progress = st.progress(0)
+if uploaded_files and st.button("🚀 Process PDFs"):
+    all_chunks = []
+    progress = st.progress(0)
 
-        for idx, uploaded_file in enumerate(uploaded_files):
-            text = extract_text_from_pdf(uploaded_file)
-            chunks = sentence_aware_token_chunks(
-                text,
-                max_tokens=max_tokens,
-                overlap_tokens=overlap_tokens
-            )
-
-            for i, chunk in enumerate(chunks):
-                all_chunks.append({
-                    "source_file": uploaded_file.name,
-                    "chunk_id": i,
-                    "token_count": chunk["token_count"],
-                    "text": chunk["text"]
-                })
-
-            progress.progress((idx + 1) / len(uploaded_files))
-
-        st.success(f"✅ Generated {len(all_chunks)} chunks")
-
-        # Preview
-        st.subheader("🔍 Chunk Preview")
-        st.json(all_chunks[:3])
-
-        # Download
-        json_bytes = json.dumps(
-            all_chunks,
-            ensure_ascii=False,
-            indent=2
-        ).encode("utf-8")
-
-        st.download_button(
-            label="⬇️ Download Chunked JSON",
-            data=json_bytes,
-            file_name="pdf_llm_chunks.json",
-            mime="application/json"
+    for idx, pdf in enumerate(uploaded_files):
+        sentence_data = extract_sentences_with_metadata(pdf)
+        chunks = sentence_aware_token_chunks(
+            sentence_data,
+            max_tokens=max_tokens,
+            overlap_tokens=overlap_tokens
         )
+
+        for i, chunk in enumerate(chunks):
+            all_chunks.append({
+                "source_file": pdf.name,
+                "chunk_id": i,
+                **chunk
+            })
+
+        progress.progress((idx + 1) / len(uploaded_files))
+
+    st.success(f"✅ Generated {len(all_chunks)} chunks")
+
+    st.subheader("🔍 Chunk Preview")
+    st.json(all_chunks[:2])
+
+    st.download_button(
+        "⬇️ Download JSON",
+        data=json.dumps(all_chunks, indent=2, ensure_ascii=False),
+        file_name="pdf_llm_chunks_with_metadata.json",
+        mime="application/json"
+    )
