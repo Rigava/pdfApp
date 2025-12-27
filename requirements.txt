@@ -17,3 +17,5 @@ langchain_groq
 PyPDF2
 sentence-transformers
 nltk
+faiss-cpu
+
