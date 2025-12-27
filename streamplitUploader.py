@@ -16,11 +16,15 @@ encoding = tiktoken.encoding_for_model(MODEL_NAME)
 # ---------------- HELPERS ----------------
 def is_heading(line):
     line = line.strip()
-    return (
-        line.isupper()
-        or bool(re.match(r"^\d+(\.\d+)*\s+", line))
-        or (len(line.split()) <= 6 and not line.endswith("."))
-    )
+    if len(line) < 4:
+        return False
+    if line.isupper():
+        return True
+    if re.match(r"^\d+(\.\d+)*\s+.+", line):
+        return True
+    if line.istitle() and len(line.split()) <= 8:
+        return True
+    return False
 
 def extract_sentences_with_metadata(pdf_file):
     reader = PdfReader(pdf_file)
@@ -37,11 +41,13 @@ def extract_sentences_with_metadata(pdf_file):
         for line in lines:
             if is_heading(line):
                 current_section = line.strip()
+                current_section = current_section or "UNKNOWN"
+
 
             sentences = sent_tokenize(line)
             for sentence in sentences:
                 data.append({
-                    "sentence": sentence,
+                    "sentence": sentence.strip(),
                     "page": page_num,
                     "section": current_section
                 })
@@ -91,9 +97,9 @@ def build_chunk(sent_items, token_count):
     return {
         "text": " ".join(s["sentence"] for s in sent_items),
         "token_count": token_count,
-        "page_start": sent_items[0]["page"],
-        "page_end": sent_items[-1]["page"],
-        "section": sent_items[-1]["section"]
+        "page_start": min(s["page"] for s in sent_items),
+        "page_end": max(s["page"] for s in sent_items),
+        "section": sent_items[0]["section"]
     }
 
 # ---------------- STREAMLIT UI ----------------
