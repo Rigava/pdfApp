@@ -5,7 +5,7 @@ import tiktoken
 from PyPDF2 import PdfReader
 from nltk.tokenize import sent_tokenize
 from io import BytesIO
-
+nltk.download('punkt_tab')
 # ---------------- CONFIG ----------------
 MODEL_NAME = "text-embedding-3-large"
 encoding = tiktoken.encoding_for_model(MODEL_NAME)
