@@ -10,6 +10,8 @@ from nltk.tokenize import sent_tokenize
 from sentence_transformers import SentenceTransformer
 import numpy as np
 
+#Run it once
+nltk.download('punkt_tab')
 # ---------------- CONFIG ----------------
 MODEL_NAME = "all-MiniLM-L6-v2"   # fast + excellent
 TOKEN_MODEL = "text-embedding-3-large"
