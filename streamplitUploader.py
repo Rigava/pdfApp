@@ -53,7 +53,15 @@ def extract_sentences_with_metadata(pdf_file):
                 })
 
     return data
-
+    
+def build_chunk(sent_items, token_count):
+    return {
+        "text": " ".join(s["sentence"] for s in sent_items),
+        "token_count": token_count,
+        "page_start": min(s["page"] for s in sent_items),
+        "page_end": max(s["page"] for s in sent_items),
+        "section": sent_items[0]["section"]
+    }
 
 def sentence_aware_token_chunks(sentences, max_tokens=600, overlap_tokens=80):
     chunks = []
@@ -92,15 +100,6 @@ def sentence_aware_token_chunks(sentences, max_tokens=600, overlap_tokens=80):
 
     return chunks
 
-
-def build_chunk(sent_items, token_count):
-    return {
-        "text": " ".join(s["sentence"] for s in sent_items),
-        "token_count": token_count,
-        "page_start": min(s["page"] for s in sent_items),
-        "page_end": max(s["page"] for s in sent_items),
-        "section": sent_items[0]["section"]
-    }
 
 # ---------------- STREAMLIT UI ----------------
 st.set_page_config(page_title="PDF → LLM Chunker (Metadata)", layout="wide")
