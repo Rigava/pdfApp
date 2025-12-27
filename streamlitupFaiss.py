@@ -152,6 +152,7 @@ if uploaded_files and st.button("🚀 Ingest into FAISS"):
         file_name="faiss_metadata.json",
         mime="application/json"
     )
+
 # ---------------- LOAD MODELS ----------------
 @st.cache_resource
 def load_faiss():
@@ -162,7 +163,7 @@ def load_faiss():
 
 @st.cache_resource
 def load_embedder():
-    return SentenceTransformer(EMBEDDING_MODEL)
+    return SentenceTransformer(MODEL_NAME)
 
 index, metadata = load_faiss()
 embedder = load_embedder()
