@@ -54,33 +54,58 @@ def chunk_text(text, chunk_size, overlap):
 
     return chunks
 
+# def extract_documents_from_pdfs(uploaded_files, chunk_size, overlap):
+#     documents = []
+
+#     for file in uploaded_files:
+#         reader = PdfReader(file)
+#         full_text = ""
+
+#         for page in reader.pages:
+#             text = page.extract_text()
+#             if text:
+#                 full_text += text + "\n"
+
+#         chunks = chunk_text(full_text, chunk_size, overlap)
+
+#         for i, chunk in enumerate(chunks):
+#             documents.append(
+#                 Document(
+#                     page_content=chunk,
+#                     metadata={
+#                         "source": file.name,
+#                         "chunk_id": i
+#                     }
+#                 )
+#             )
+
+#     return documents
 def extract_documents_from_pdfs(uploaded_files, chunk_size, overlap):
     documents = []
 
     for file in uploaded_files:
         reader = PdfReader(file)
-        full_text = ""
 
-        for page in reader.pages:
-            text = page.extract_text()
-            if text:
-                full_text += text + "\n"
+        for page_num, page in enumerate(reader.pages, start=1):
+            page_text = page.extract_text()
+            if not page_text:
+                continue
 
-        chunks = chunk_text(full_text, chunk_size, overlap)
+            chunks = chunk_text(page_text, chunk_size, overlap)
 
-        for i, chunk in enumerate(chunks):
-            documents.append(
-                Document(
-                    page_content=chunk,
-                    metadata={
-                        "source": file.name,
-                        "chunk_id": i
-                    }
+            for chunk_id, chunk in enumerate(chunks):
+                documents.append(
+                    Document(
+                        page_content=chunk,
+                        metadata={
+                            "source": file.name,
+                            "page": page_num,
+                            "chunk_id": chunk_id
+                        }
+                    )
                 )
-            )
 
     return documents
-
 # ---------------- Streaming Callback ----------------
 class StreamlitCallbackHandler(BaseCallbackHandler):
     def __init__(self, container):
@@ -163,8 +188,9 @@ if question and "retriever" in st.session_state:
     result = qa_chain(question)
 
     with st.expander("📚 Source Chunks"):
-        for doc in result["source_documents"]:
-            st.markdown(
-                f"**{doc.metadata['source']} (chunk {doc.metadata['chunk_id']})**"
-            )
+        st.markdown(
+                    f"**{doc.metadata['source']} | "
+                    f"Page {doc.metadata['page']} | "
+                    f"Chunk {doc.metadata['chunk_id']}**"
+                )
             st.write(doc.page_content[:500] + "...")
