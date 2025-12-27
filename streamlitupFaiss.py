@@ -152,3 +152,77 @@ if uploaded_files and st.button("🚀 Ingest into FAISS"):
         file_name="faiss_metadata.json",
         mime="application/json"
     )
+# ---------------- LOAD MODELS ----------------
+@st.cache_resource
+def load_faiss():
+    index = faiss.read_index(f"{INDEX_DIR}/index.faiss")
+    with open(f"{INDEX_DIR}/metadata.json", "r", encoding="utf-8") as f:
+        metadata = json.load(f)
+    return index, metadata
+
+@st.cache_resource
+def load_embedder():
+    return SentenceTransformer(EMBEDDING_MODEL)
+
+index, metadata = load_faiss()
+embedder = load_embedder()
+
+# ---------------- SEARCH ----------------
+def semantic_search(query, k=TOP_K):
+    query_embedding = embedder.encode([query]).astype("float32")
+    distances, indices = index.search(query_embedding, k)
+
+    results = []
+    for idx in indices[0]:
+        results.append(metadata[idx])
+
+    return results
+
+
+# ---------------- STREAMLIT UI ----------------
+if "messages" not in st.session_state:
+    st.session_state.messages = []
+
+# Display chat history
+for msg in st.session_state.messages:
+    with st.chat_message(msg["role"]):
+        st.markdown(msg["content"])
+
+# Chat input
+user_query = st.chat_input("Ask a question about your documents...")
+
+if user_query:
+    # Show user message
+    st.session_state.messages.append({
+        "role": "user",
+        "content": user_query
+    })
+    with st.chat_message("user"):
+        st.markdown(user_query)
+
+    # Retrieve documents
+    with st.spinner("🔍 Searching documents..."):
+        results = semantic_search(user_query)
+
+    # Build answer (retrieval-only for now)
+    answer_text = ""
+    for i, r in enumerate(results, start=1):
+        answer_text += f"""
+**Result {i}**
+- 📄 **Source**: {r['source_file']}
+- 📍 **Pages**: {r['page_start']}–{r['page_end']}
+- 🧩 **Section**: {r['section']}
+
+{r['text']}
+
+---
+"""
+
+    # Show assistant message
+    st.session_state.messages.append({
+        "role": "assistant",
+        "content": answer_text
+    })
+
+    with st.chat_message("assistant"):
+        st.markdown(answer_text)
