@@ -188,9 +188,10 @@ if question and "retriever" in st.session_state:
     result = qa_chain(question)
 
     with st.expander("📚 Source Chunks"):
-        st.markdown(
-                    f"**{doc.metadata['source']} | "
-                    f"Page {doc.metadata['page']} | "
-                    f"Chunk {doc.metadata['chunk_id']}**"
-                )
-        st.write(doc.page_content[:500] + "...")
+        for doc in result["source_documents"]:
+            st.markdown(
+                        f"**{doc.metadata['source']} | "
+                        f"Page {doc.metadata['page']} | "
+                        f"Chunk {doc.metadata['chunk_id']}**"
+                    )
+            st.write(doc.page_content[:500] + "...")
