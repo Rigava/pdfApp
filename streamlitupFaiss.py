@@ -152,7 +152,7 @@ if uploaded_files and st.button("🚀 Ingest into FAISS"):
         file_name="faiss_metadata.json",
         mime="application/json"
     )
-
+EMBEDDING_MODEL = "all-MiniLM-L6-v2"
 # ---------------- LOAD MODELS ----------------
 @st.cache_resource
 def load_faiss():
