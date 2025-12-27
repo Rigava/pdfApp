@@ -16,3 +16,4 @@ tiktoken
 langchain_groq
 PyPDF2
 sentence-transformers
+nltk
