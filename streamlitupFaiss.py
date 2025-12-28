@@ -152,12 +152,12 @@ if uploaded_files and st.button("🚀 Ingest into FAISS"):
         file_name="faiss_metadata.json",
         mime="application/json"
     )
-# ------------------------------------------------- CONFIG FOR CHAT UI---------------------------------------------------------------
+# ------------------------------------------------- CONFIG FOR LLM ingestion---------------------------------------------------------------
     EMBEDDING_MODEL = "all-MiniLM-L6-v2"
     TOP_K = 5
     GEMINI_MODEL = "models/gemini-2.5-flash"
-    # ---------------- INIT ----------------
-    genai.configure(api_key=st.secret.GOOGLE_API_KEY)
+# -------------------------------------------------- INIT ---------------------------------------------------------------------------------
+    genai.configure(api_key=st.secrets.GOOGLE_API_KEY)
     
     # ---------------- LOAD MODELS ----------------
     @st.cache_resource
