@@ -249,14 +249,14 @@ if user_query:
     with st.spinner("🔍 Searching documents..."):
         chunks = semantic_search(user_query)
     if not chunks:
-    no_answer = "I couldn't find relevant information in the documents."
-    st.session_state.messages.append({
-        "role": "assistant",
-        "content": no_answer
-    })
-    with st.chat_message("assistant"):
-        st.markdown(no_answer)
-    st.stop()
+        no_answer = "I couldn't find relevant information in the documents."
+        st.session_state.messages.append({
+            "role": "assistant",
+            "content": no_answer
+        })
+        with st.chat_message("assistant"):
+            st.markdown(no_answer)
+        st.stop()
 
     # Build prompt
     prompt = build_prompt(user_query, chunks)
