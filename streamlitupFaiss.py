@@ -116,6 +116,11 @@ def semantic_search(query, k=TOP_K):
         results.append(metadata[idx])
 
     return results
+# ---------------- LOAD INDEX ----------------
+if os.path.exists(f"{INDEX_DIR}/index.faiss"):
+    index, metadata = load_faiss()
+else:
+    index, metadata = None, None
 # ---------------- PROMPT ----------------
 def build_prompt(question, chunks):
     context = ""
@@ -143,8 +148,14 @@ INSTRUCTIONS:
 - Cite sources like (Source 1), (Source 2)
 - Do NOT hallucinate
 """
-
-# ---------------- STREAMLIT UI ----------------
+#-----------------------------Gemini LLM call helper-------------------------------
+def get_llm_response(prompt):
+    response = client.models.generate_content(
+        model=GEMINI_MODEL,
+        contents=prompt
+    )
+    return response.text
+# ---------------- --------------------------------------------------------------STREAMLIT UI ----------------
 st.set_page_config("PDF → FAISS Ingestion", layout="wide")
 st.title("📄 PDF → FAISS Vector DB (RAG Ready)")
 
@@ -203,87 +214,87 @@ if uploaded_files and st.button("🚀 Ingest into FAISS"):
         mime="application/json"
     )
     
-        #-----------------------------------------------LLM INITIATION-------------------------------------------------------
-    if "faiss_loaded" not in st.session_state:
-        try:
-            st.session_state.index, st.session_state.metadata = load_faiss()
-            st.session_state.embedder = load_embedder()
-            st.session_state.faiss_loaded = True
-        except:
-            st.session_state.faiss_loaded = False
+    #-----------------------------------------------LLM INITIATION-------------------------------------------------------
+if "faiss_loaded" not in st.session_state:
+    try:
+        st.session_state.index, st.session_state.metadata = load_faiss()
+        st.session_state.embedder = load_embedder()
+        st.session_state.faiss_loaded = True
+    except:
+        st.session_state.faiss_loaded = False
 
 
-    # ----------------------------------------------- CHATT UI ---------------------------------------------------------
-    st.subheader("💬 Ask questions about your PDFs")
-    if "messages" not in st.session_state:
-        st.session_state.messages = []
-    
-    # Render history
-    for msg in st.session_state.messages:
-        with st.chat_message(msg["role"]):
-            st.markdown(msg["content"])
-    
-    user_query = st.chat_input("Ask a question about your documents...")
-    
-    if user_query:
-        # User message
-        st.session_state.messages.append({
-            "role": "user",
-            "content": user_query
-        })
-        with st.chat_message("user"):
-            st.markdown(user_query)
-    
-        # Guard: FAISS not ready
-        if not st.session_state.get("faiss_loaded", False):
-            error_msg = "❌ Please ingest PDFs before asking questions."
-            st.session_state.messages.append({
-                "role": "assistant",
-                "content": error_msg
-            })
-            with st.chat_message("assistant"):
-                st.error(error_msg)
-            st.stop()
-    
-        # Retrieve
-        with st.spinner("🔍 Searching documents..."):
-            chunks = semantic_search(user_query)
-        if not chunks:
-            no_answer = "I couldn't find relevant information in the documents."
-            st.session_state.messages.append({
-                "role": "assistant",
-                "content": no_answer
-            })
-            with st.chat_message("assistant"):
-                st.markdown(no_answer)
-            st.stop()
-    
-        # Build prompt
-        prompt = build_prompt(user_query, chunks)
-    
-        # ----------------------------------------------Generate answer with LLM CALL---------------------------------------------------
-        with st.spinner("🧠 Gemini is thinking..."):
-            response = client.models.generate_content(model = GEMINI_MODEL,
-                                                      contents = prompt)
-            # Gemini safety
-            answer = getattr(response, "text", None)
-            if not answer:
-                answer = "⚠️ I couldn't generate a response."
-    
-        # Assistant message
+# ----------------------------------------------- CHATT UI ---------------------------------------------------------
+st.subheader("💬 Ask questions about your PDFs")
+if "messages" not in st.session_state:
+    st.session_state.messages = []
+
+# Render history
+for msg in st.session_state.messages:
+    with st.chat_message(msg["role"]):
+        st.markdown(msg["content"])
+
+user_query = st.chat_input("Ask a question about your documents...")
+
+if user_query:
+    # User message
+    st.session_state.messages.append({
+        "role": "user",
+        "content": user_query
+    })
+    with st.chat_message("user"):
+        st.markdown(user_query)
+
+    # Guard: FAISS not ready
+    if not st.session_state.get("faiss_loaded", False):
+        error_msg = "❌ Please ingest PDFs before asking questions."
         st.session_state.messages.append({
             "role": "assistant",
-            "content": answer
+            "content": error_msg
         })
-    
         with st.chat_message("assistant"):
-            st.markdown(answer)
-    
-            # Optional: show sources used
-            with st.expander("📚 Sources"):
-                for i, c in enumerate(chunks, start=1):
-                    st.markdown(
-                        f"**Source {i}** — {c['source_file']} | "
-                        f"Pages {c['page_start']}–{c['page_end']} | "
-                        f"Section: {c['section']}"
-                    )
+            st.error(error_msg)
+        st.stop()
+
+    # Retrieve
+    with st.spinner("🔍 Searching documents..."):
+        chunks = semantic_search(user_query)
+    if not chunks:
+        no_answer = "I couldn't find relevant information in the documents."
+        st.session_state.messages.append({
+            "role": "assistant",
+            "content": no_answer
+        })
+        with st.chat_message("assistant"):
+            st.markdown(no_answer)
+        st.stop()
+
+    # Build prompt
+    prompt = build_prompt(user_query, chunks)
+
+    # ----------------------------------------------Generate answer with LLM CALL---------------------------------------------------
+    with st.spinner("🧠 Gemini is thinking..."):
+        response = client.models.generate_content(model = GEMINI_MODEL,
+                                                  contents = prompt)
+        # Gemini safety
+        answer = getattr(response, "text", None)
+        if not answer:
+            answer = "⚠️ I couldn't generate a response."
+
+    # Assistant message
+    st.session_state.messages.append({
+        "role": "assistant",
+        "content": answer
+    })
+
+    with st.chat_message("assistant"):
+        st.markdown(answer)
+
+        # Optional: show sources used
+        with st.expander("📚 Sources"):
+            for i, c in enumerate(chunks, start=1):
+                st.markdown(
+                    f"**Source {i}** — {c['source_file']} | "
+                    f"Pages {c['page_start']}–{c['page_end']} | "
+                    f"Section: {c['section']}"
+                )
