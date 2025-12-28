@@ -22,8 +22,13 @@ os.makedirs(INDEX_DIR, exist_ok=True)
 
 encoding = tiktoken.encoding_for_model(TOKEN_MODEL)
 embedder = SentenceTransformer(MODEL_NAME)
-
-# ---------------- HELPERS ----------------
+# ------------------------------------------------- CONFIG FOR LLM ingestion---------------------------------------------------------------
+EMBEDDING_MODEL = "all-MiniLM-L6-v2"
+TOP_K = 5
+GEMINI_MODEL = "models/gemini-2.5-flash"
+# -------------------------------------------------- INIT ---------------------------------------------------------------------------------
+genai.configure(api_key=st.secrets.GOOGLE_API_KEY)
+# ------------------------------------------------- TEXT Extraction HELPERS ---------------------------------------------------------------
 def is_heading(line):
     line = line.strip()
     return (
@@ -31,7 +36,6 @@ def is_heading(line):
         or bool(re.match(r"^\d+(\.\d+)*\s+", line))
         or (len(line.split()) <= 6 and not line.endswith("."))
     )
-
 def extract_sentences_with_metadata(pdf_file):
     reader = PdfReader(pdf_file)
     data = []
@@ -54,7 +58,6 @@ def extract_sentences_with_metadata(pdf_file):
                 })
 
     return data
-
 def sentence_aware_chunks(sentences, max_tokens=600, overlap_tokens=80):
     chunks, current, tokens = [], [], 0
 
@@ -74,7 +77,6 @@ def sentence_aware_chunks(sentences, max_tokens=600, overlap_tokens=80):
         chunks.append(build_chunk(current, tokens))
 
     return chunks
-
 def overlap_sentences(sentences, overlap_tokens):
     overlap, tokens = [], 0
     for s in reversed(sentences):
@@ -85,7 +87,6 @@ def overlap_sentences(sentences, overlap_tokens):
         else:
             break
     return overlap, tokens
-
 def build_chunk(sentences, token_count):
     return {
         "text": " ".join(s["sentence"] for s in sentences),
@@ -94,6 +95,54 @@ def build_chunk(sentences, token_count):
         "page_end": sentences[-1]["page"],
         "section": sentences[-1]["section"]
     }
+# ----------------------------------------------- HELPRER for LOADING faiss MODELS --------------------------------------------------------------
+@st.cache_resource
+def load_faiss():
+    index = faiss.read_index(f"{INDEX_DIR}/index.faiss")
+    with open(f"{INDEX_DIR}/metadata.json", "r", encoding="utf-8") as f:
+        metadata = json.load(f)
+    return index, metadata
+
+@st.cache_resource
+def load_embedder():
+    return SentenceTransformer(MODEL_NAME)
+# ---------------- SEARCH ----------------
+def semantic_search(query, k=TOP_K):
+    query_embedding = embedder.encode([query]).astype("float32")
+    distances, indices = index.search(query_embedding, k)
+
+    results = []
+    for idx in indices[0]:
+        results.append(metadata[idx])
+
+    return results
+# ---------------- PROMPT ----------------
+def build_prompt(question, chunks):
+    context = ""
+    for i, c in enumerate(chunks, start=1):
+        context += f"""
+[Source {i}]
+File: {c['source_file']}
+Pages: {c['page_start']}–{c['page_end']}
+Section: {c['section']}
+Text: {c['text']}
+"""
+
+    return f"""
+You are a helpful assistant answering questions using ONLY the provided sources.
+If the answer is not present in the sources, say you don't know.
+
+QUESTION:
+{question}
+
+SOURCES:
+{context}
+
+INSTRUCTIONS:
+- Provide a clear, concise answer
+- Cite sources like (Source 1), (Source 2)
+- Do NOT hallucinate
+"""
 
 # ---------------- STREAMLIT UI ----------------
 st.set_page_config("PDF → FAISS Ingestion", layout="wide")
@@ -153,67 +202,11 @@ if uploaded_files and st.button("🚀 Ingest into FAISS"):
         file_name="faiss_metadata.json",
         mime="application/json"
     )
-# ------------------------------------------------- CONFIG FOR LLM ingestion---------------------------------------------------------------
-    EMBEDDING_MODEL = "all-MiniLM-L6-v2"
-    TOP_K = 5
-    GEMINI_MODEL = "models/gemini-2.5-flash"
-# -------------------------------------------------- INIT ---------------------------------------------------------------------------------
-    genai.configure(api_key=st.secrets.GOOGLE_API_KEY)
     
-    # ---------------- LOAD MODELS ----------------
-    @st.cache_resource
-    def load_faiss():
-        index = faiss.read_index(f"{INDEX_DIR}/index.faiss")
-        with open(f"{INDEX_DIR}/metadata.json", "r", encoding="utf-8") as f:
-            metadata = json.load(f)
-        return index, metadata
-    
-    @st.cache_resource
-    def load_embedder():
-        return SentenceTransformer(MODEL_NAME)
     
     index, metadata = load_faiss()
     embedder = load_embedder()
-    model = genai.GenerativeModel(GEMINI_MODEL)
-    
-    # ---------------- SEARCH ----------------
-    def semantic_search(query, k=TOP_K):
-        query_embedding = embedder.encode([query]).astype("float32")
-        distances, indices = index.search(query_embedding, k)
-    
-        results = []
-        for idx in indices[0]:
-            results.append(metadata[idx])
-    
-        return results
-    # ---------------- PROMPT ----------------
-    def build_prompt(question, chunks):
-        context = ""
-        for i, c in enumerate(chunks, start=1):
-            context += f"""
-    [Source {i}]
-    File: {c['source_file']}
-    Pages: {c['page_start']}–{c['page_end']}
-    Section: {c['section']}
-    Text: {c['text']}
-    """
-    
-        return f"""
-    You are a helpful assistant answering questions using ONLY the provided sources.
-    If the answer is not present in the sources, say you don't know.
-    
-    QUESTION:
-    {question}
-    
-    SOURCES:
-    {context}
-    
-    INSTRUCTIONS:
-    - Provide a clear, concise answer
-    - Cite sources like (Source 1), (Source 2)
-    - Do NOT hallucinate
-    """
-    
+    model = genai.GenerativeModel(GEMINI_MODEL)    
     # ---------------- CHATT UI ----------------
     if "messages" not in st.session_state:
         st.session_state.messages = []
