@@ -19,6 +19,7 @@ sentence-transformers
 nltk
 faiss-cpu
 langchain_google_genai
-google.generativeai
+google.genai
+
 
 
