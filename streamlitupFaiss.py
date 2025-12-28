@@ -13,7 +13,7 @@ import google.genai as genai
 
 #Run it once
 nltk.download('punkt_tab')
-# ---------------- CONFIG ----------------
+# ------------------------------------------------- CONFIG for tokenisation and embedding-------------------------- ----------------
 MODEL_NAME = "all-MiniLM-L6-v2"   # fast + excellent
 TOKEN_MODEL = "text-embedding-3-large"
 
@@ -203,12 +203,12 @@ if uploaded_files and st.button("🚀 Ingest into FAISS"):
         mime="application/json"
     )
     
-    
+    #-----------------------------------------------LLM INITIATION-------------------------------------------------------
     index, metadata = load_faiss()
     embedder = load_embedder()
     # model = genai.GenerativeModel(GEMINI_MODEL)
-    model = client.models(model=GEMINI_MODEL)
-    # ---------------- CHATT UI ----------------
+    # model = client.models(model=GEMINI_MODEL)
+    # ----------------------------------------------- CHATT UI ---------------------------------------------------------
     if "messages" not in st.session_state:
         st.session_state.messages = []
     
@@ -237,7 +237,7 @@ if uploaded_files and st.button("🚀 Ingest into FAISS"):
     
         # Generate answer
         with st.spinner("🧠 Gemini is thinking..."):
-            response = model.generate_content(prompt)
+            response = client.models.generate_content(model = GEMINI_MODEL,prompt)
             answer = response.text
     
         # Assistant message
