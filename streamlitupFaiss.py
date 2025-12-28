@@ -236,7 +236,8 @@ if uploaded_files and st.button("🚀 Ingest into FAISS"):
     
         # Generate answer
         with st.spinner("🧠 Gemini is thinking..."):
-            response = client.models.generate_content(model = GEMINI_MODEL,prompt)
+            response = client.models.generate_content(model = GEMINI_MODEL,
+                                                      contents = prompt)
             answer = response.text
     
         # Assistant message
