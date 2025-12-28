@@ -152,114 +152,113 @@ if uploaded_files and st.button("🚀 Ingest into FAISS"):
         file_name="faiss_metadata.json",
         mime="application/json"
     )
-# ---------------- CONFIG FOR CHAT UI----------------
-EMBEDDING_MODEL = "all-MiniLM-L6-v2"
-TOP_K = 5
-GEMINI_MODEL = "models/gemini-2.5-flash"
-# ---------------- INIT ----------------
-genai.configure(api_key=st.secret.GOOGLE_API_KEY)
-
-# ---------------- LOAD MODELS ----------------
-# @st.cache_resource
-def load_faiss():
-    index = faiss.read_index(f"{INDEX_DIR}/index.faiss")
-    with open(f"{INDEX_DIR}/metadata.json", "r", encoding="utf-8") as f:
-        metadata = json.load(f)
-    return index, metadata
-
-@st.cache_resource
-def load_embedder():
-    return SentenceTransformer(MODEL_NAME)
-
-index, metadata = load_faiss()
-embedder = load_embedder()
-model = genai.GenerativeModel(GEMINI_MODEL)
-
-# ---------------- SEARCH ----------------
-def semantic_search(query, k=TOP_K):
-    query_embedding = embedder.encode([query]).astype("float32")
-    distances, indices = index.search(query_embedding, k)
-
-    results = []
-    for idx in indices[0]:
-        results.append(metadata[idx])
-
-    return results
-# ---------------- PROMPT ----------------
-def build_prompt(question, chunks):
-    context = ""
-    for i, c in enumerate(chunks, start=1):
-        context += f"""
-[Source {i}]
-File: {c['source_file']}
-Pages: {c['page_start']}–{c['page_end']}
-Section: {c['section']}
-Text: {c['text']}
-"""
-
-    return f"""
-You are a helpful assistant answering questions using ONLY the provided sources.
-If the answer is not present in the sources, say you don't know.
-
-QUESTION:
-{question}
-
-SOURCES:
-{context}
-
-INSTRUCTIONS:
-- Provide a clear, concise answer
-- Cite sources like (Source 1), (Source 2)
-- Do NOT hallucinate
-"""
-
-# ---------------- CHATT UI ----------------
-if "messages" not in st.session_state:
-    st.session_state.messages = []
-
-# Render history
-for msg in st.session_state.messages:
-    with st.chat_message(msg["role"]):
-        st.markdown(msg["content"])
-
-user_query = st.chat_input("Ask a question about your documents...")
-
-if user_query:
-    # User message
-    st.session_state.messages.append({
-        "role": "user",
-        "content": user_query
-    })
-    with st.chat_message("user"):
-        st.markdown(user_query)
-
-    # Retrieve
-    with st.spinner("🔍 Searching documents..."):
-        chunks = semantic_search(user_query)
-
-    # Build prompt
-    prompt = build_prompt(user_query, chunks)
-
-    # Generate answer
-    with st.spinner("🧠 Gemini is thinking..."):
-        response = model.generate_content(prompt)
-        answer = response.text
-
-    # Assistant message
-    st.session_state.messages.append({
-        "role": "assistant",
-        "content": answer
-    })
-
-    with st.chat_message("assistant"):
-        st.markdown(answer)
-
-        # Optional: show sources used
-        with st.expander("📚 Sources"):
-            for i, c in enumerate(chunks, start=1):
-                st.markdown(
-                    f"**Source {i}** — {c['source_file']} | "
-                    f"Pages {c['page_start']}–{c['page_end']} | "
-                    f"Section: {c['section']}"
-                )
-# -----------------------older chat UI -------------------
+# ------------------------------------------------- CONFIG FOR CHAT UI---------------------------------------------------------------
+    EMBEDDING_MODEL = "all-MiniLM-L6-v2"
+    TOP_K = 5
+    GEMINI_MODEL = "models/gemini-2.5-flash"
+    # ---------------- INIT ----------------
+    genai.configure(api_key=st.secret.GOOGLE_API_KEY)
+    
+    # ---------------- LOAD MODELS ----------------
+    @st.cache_resource
+    def load_faiss():
+        index = faiss.read_index(f"{INDEX_DIR}/index.faiss")
+        with open(f"{INDEX_DIR}/metadata.json", "r", encoding="utf-8") as f:
+            metadata = json.load(f)
+        return index, metadata
+    
+    @st.cache_resource
+    def load_embedder():
+        return SentenceTransformer(MODEL_NAME)
+    
+    index, metadata = load_faiss()
+    embedder = load_embedder()
+    model = genai.GenerativeModel(GEMINI_MODEL)
+    
+    # ---------------- SEARCH ----------------
+    def semantic_search(query, k=TOP_K):
+        query_embedding = embedder.encode([query]).astype("float32")
+        distances, indices = index.search(query_embedding, k)
+    
+        results = []
+        for idx in indices[0]:
+            results.append(metadata[idx])
+    
+        return results
+    # ---------------- PROMPT ----------------
+    def build_prompt(question, chunks):
+        context = ""
+        for i, c in enumerate(chunks, start=1):
+            context += f"""
+    [Source {i}]
+    File: {c['source_file']}
+    Pages: {c['page_start']}–{c['page_end']}
+    Section: {c['section']}
+    Text: {c['text']}
+    """
+    
+        return f"""
+    You are a helpful assistant answering questions using ONLY the provided sources.
+    If the answer is not present in the sources, say you don't know.
+    
+    QUESTION:
+    {question}
+    
+    SOURCES:
+    {context}
+    
+    INSTRUCTIONS:
+    - Provide a clear, concise answer
+    - Cite sources like (Source 1), (Source 2)
+    - Do NOT hallucinate
+    """
+    
+    # ---------------- CHATT UI ----------------
+    if "messages" not in st.session_state:
+        st.session_state.messages = []
+    
+    # Render history
+    for msg in st.session_state.messages:
+        with st.chat_message(msg["role"]):
+            st.markdown(msg["content"])
+    
+    user_query = st.chat_input("Ask a question about your documents...")
+    
+    if user_query:
+        # User message
+        st.session_state.messages.append({
+            "role": "user",
+            "content": user_query
+        })
+        with st.chat_message("user"):
+            st.markdown(user_query)
+    
+        # Retrieve
+        with st.spinner("🔍 Searching documents..."):
+            chunks = semantic_search(user_query)
+    
+        # Build prompt
+        prompt = build_prompt(user_query, chunks)
+    
+        # Generate answer
+        with st.spinner("🧠 Gemini is thinking..."):
+            response = model.generate_content(prompt)
+            answer = response.text
+    
+        # Assistant message
+        st.session_state.messages.append({
+            "role": "assistant",
+            "content": answer
+        })
+    
+        with st.chat_message("assistant"):
+            st.markdown(answer)
+    
+            # Optional: show sources used
+            with st.expander("📚 Sources"):
+                for i, c in enumerate(chunks, start=1):
+                    st.markdown(
+                        f"**Source {i}** — {c['source_file']} | "
+                        f"Pages {c['page_start']}–{c['page_end']} | "
+                        f"Section: {c['section']}"
+                    )
