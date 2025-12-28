@@ -225,19 +225,23 @@ if "faiss_loaded" not in st.session_state:
 
 
 # ----------------------------------------------- CHATT UI ---------------------------------------------------------
+st.divider()
 st.subheader("💬 Ask questions about your PDFs")
+if index is None:
+    st.warning("Please ingest PDFs first to enable chat.")
+    st.stop()
+# Initialize chat history
 if "messages" not in st.session_state:
     st.session_state.messages = []
-
-# Render history
+# Display chat history
 for msg in st.session_state.messages:
     with st.chat_message(msg["role"]):
         st.markdown(msg["content"])
-
+#Chat input
 user_query = st.chat_input("Ask a question about your documents...")
 
 if user_query:
-    # User message
+    # Show User message
     st.session_state.messages.append({
         "role": "user",
         "content": user_query
@@ -255,11 +259,11 @@ if user_query:
         with st.chat_message("assistant"):
             st.error(error_msg)
         st.stop()
-
+     # -------- RAG PIPELINE --------
     # Retrieve
     with st.spinner("🔍 Searching documents..."):
-        chunks = semantic_search(user_query)
-    if not chunks:
+        retrieved_chunks = semantic_search(user_query)
+    if not retrieved_chunks:
         no_answer = "I couldn't find relevant information in the documents."
         st.session_state.messages.append({
             "role": "assistant",
@@ -270,23 +274,22 @@ if user_query:
         st.stop()
 
     # Build prompt
-    prompt = build_prompt(user_query, chunks)
+    prompt = build_prompt(user_query, retrieved_chunks)
 
     # ----------------------------------------------Generate answer with LLM CALL---------------------------------------------------
     with st.spinner("🧠 Gemini is thinking..."):
-        response = client.models.generate_content(model = GEMINI_MODEL,
-                                                  contents = prompt)
+        response = get_llm_response(prompt)
         # Gemini safety
         answer = getattr(response, "text", None)
         if not answer:
             answer = "⚠️ I couldn't generate a response."
 
-    # Assistant message
+    # Save Assistant message
     st.session_state.messages.append({
         "role": "assistant",
         "content": answer
     })
-
+    # Display assistant response    
     with st.chat_message("assistant"):
         st.markdown(answer)
 
