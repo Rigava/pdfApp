@@ -27,7 +27,6 @@ EMBEDDING_MODEL = "all-MiniLM-L6-v2"
 TOP_K = 5
 GEMINI_MODEL = "models/gemini-2.5-flash"
 # -------------------------------------------------- INIT ---------------------------------------------------------------------------------
-# genai.configure(api_key=st.secrets.GOOGLE_API_KEY)
 client = genai.Client(api_key=st.secrets.GOOGLE_API_KEY)
 # ------------------------------------------------- TEXT Extraction HELPERS ---------------------------------------------------------------
 def is_heading(line):
