@@ -204,10 +204,17 @@ if uploaded_files and st.button("🚀 Ingest into FAISS"):
     )
     
     #-----------------------------------------------LLM INITIATION-------------------------------------------------------
-    index, metadata = load_faiss()
-    embedder = load_embedder()
+if "faiss_loaded" not in st.session_state:
+    try:
+        st.session_state.index, st.session_state.metadata = load_faiss()
+        st.session_state.embedder = load_embedder()
+        st.session_state.faiss_loaded = True
+    except:
+        st.session_state.faiss_loaded = False
+
 
 # ----------------------------------------------- CHATT UI ---------------------------------------------------------
+st.subheader("💬 Ask questions about your PDFs")
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
@@ -227,18 +234,41 @@ if user_query:
     with st.chat_message("user"):
         st.markdown(user_query)
 
+    # Guard: FAISS not ready
+    if not st.session_state.get("faiss_loaded", False):
+        error_msg = "❌ Please ingest PDFs before asking questions."
+        st.session_state.messages.append({
+            "role": "assistant",
+            "content": error_msg
+        })
+        with st.chat_message("assistant"):
+            st.error(error_msg)
+        st.stop()
+
     # Retrieve
     with st.spinner("🔍 Searching documents..."):
         chunks = semantic_search(user_query)
+    if not chunks:
+    no_answer = "I couldn't find relevant information in the documents."
+    st.session_state.messages.append({
+        "role": "assistant",
+        "content": no_answer
+    })
+    with st.chat_message("assistant"):
+        st.markdown(no_answer)
+    st.stop()
 
     # Build prompt
     prompt = build_prompt(user_query, chunks)
 
-    # Generate answer
+    # ----------------------------------------------Generate answer with LLM CALL---------------------------------------------------
     with st.spinner("🧠 Gemini is thinking..."):
         response = client.models.generate_content(model = GEMINI_MODEL,
                                                   contents = prompt)
-        answer = response.text
+        # Gemini safety
+        answer = getattr(response, "text", None)
+        if not answer:
+            answer = "⚠️ I couldn't generate a response."
 
     # Assistant message
     st.session_state.messages.append({
