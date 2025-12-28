@@ -206,7 +206,7 @@ if uploaded_files and st.button("🚀 Ingest into FAISS"):
     #-----------------------------------------------LLM INITIATION-------------------------------------------------------
     index, metadata = load_faiss()
     embedder = load_embedder()
-    # model = genai.GenerativeModel(GEMINI_MODEL)
+
     # model = client.models(model=GEMINI_MODEL)
     # ----------------------------------------------- CHATT UI ---------------------------------------------------------
     if "messages" not in st.session_state:
