@@ -207,53 +207,53 @@ if uploaded_files and st.button("🚀 Ingest into FAISS"):
     index, metadata = load_faiss()
     embedder = load_embedder()
 
-    # ----------------------------------------------- CHATT UI ---------------------------------------------------------
-    if "messages" not in st.session_state:
-        st.session_state.messages = []
-    
-    # Render history
-    for msg in st.session_state.messages:
-        with st.chat_message(msg["role"]):
-            st.markdown(msg["content"])
-    
-    user_query = st.chat_input("Ask a question about your documents...")
-    
-    if user_query:
-        # User message
-        st.session_state.messages.append({
-            "role": "user",
-            "content": user_query
-        })
-        with st.chat_message("user"):
-            st.markdown(user_query)
-    
-        # Retrieve
-        with st.spinner("🔍 Searching documents..."):
-            chunks = semantic_search(user_query)
-    
-        # Build prompt
-        prompt = build_prompt(user_query, chunks)
-    
-        # Generate answer
-        with st.spinner("🧠 Gemini is thinking..."):
-            response = client.models.generate_content(model = GEMINI_MODEL,
-                                                      contents = prompt)
-            answer = response.text
-    
-        # Assistant message
-        st.session_state.messages.append({
-            "role": "assistant",
-            "content": answer
-        })
-    
-        with st.chat_message("assistant"):
-            st.markdown(answer)
-    
-            # Optional: show sources used
-            with st.expander("📚 Sources"):
-                for i, c in enumerate(chunks, start=1):
-                    st.markdown(
-                        f"**Source {i}** — {c['source_file']} | "
-                        f"Pages {c['page_start']}–{c['page_end']} | "
-                        f"Section: {c['section']}"
-                    )
+# ----------------------------------------------- CHATT UI ---------------------------------------------------------
+if "messages" not in st.session_state:
+    st.session_state.messages = []
+
+# Render history
+for msg in st.session_state.messages:
+    with st.chat_message(msg["role"]):
+        st.markdown(msg["content"])
+
+user_query = st.chat_input("Ask a question about your documents...")
+
+if user_query:
+    # User message
+    st.session_state.messages.append({
+        "role": "user",
+        "content": user_query
+    })
+    with st.chat_message("user"):
+        st.markdown(user_query)
+
+    # Retrieve
+    with st.spinner("🔍 Searching documents..."):
+        chunks = semantic_search(user_query)
+
+    # Build prompt
+    prompt = build_prompt(user_query, chunks)
+
+    # Generate answer
+    with st.spinner("🧠 Gemini is thinking..."):
+        response = client.models.generate_content(model = GEMINI_MODEL,
+                                                  contents = prompt)
+        answer = response.text
+
+    # Assistant message
+    st.session_state.messages.append({
+        "role": "assistant",
+        "content": answer
+    })
+
+    with st.chat_message("assistant"):
+        st.markdown(answer)
+
+        # Optional: show sources used
+        with st.expander("📚 Sources"):
+            for i, c in enumerate(chunks, start=1):
+                st.markdown(
+                    f"**Source {i}** — {c['source_file']} | "
+                    f"Pages {c['page_start']}–{c['page_end']} | "
+                    f"Section: {c['section']}"
+                )
