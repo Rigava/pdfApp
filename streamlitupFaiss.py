@@ -9,6 +9,7 @@ from PyPDF2 import PdfReader
 from nltk.tokenize import sent_tokenize
 from sentence_transformers import SentenceTransformer
 import numpy as np
+import google.generativeai as genai
 
 #Run it once
 nltk.download('punkt_tab')
