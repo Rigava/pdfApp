@@ -27,7 +27,8 @@ EMBEDDING_MODEL = "all-MiniLM-L6-v2"
 TOP_K = 5
 GEMINI_MODEL = "models/gemini-2.5-flash"
 # -------------------------------------------------- INIT ---------------------------------------------------------------------------------
-genai.configure(api_key=st.secrets.GOOGLE_API_KEY)
+# genai.configure(api_key=st.secrets.GOOGLE_API_KEY)
+client = genai.Client(api_key=st.secrets.GOOGLE_API_KEY)
 # ------------------------------------------------- TEXT Extraction HELPERS ---------------------------------------------------------------
 def is_heading(line):
     line = line.strip()
@@ -206,7 +207,8 @@ if uploaded_files and st.button("🚀 Ingest into FAISS"):
     
     index, metadata = load_faiss()
     embedder = load_embedder()
-    model = genai.GenerativeModel(GEMINI_MODEL)    
+    # model = genai.GenerativeModel(GEMINI_MODEL)
+    model = client.models(model=GEMINI_MODEL)
     # ---------------- CHATT UI ----------------
     if "messages" not in st.session_state:
         st.session_state.messages = []
