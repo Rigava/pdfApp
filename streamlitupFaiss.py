@@ -160,7 +160,7 @@ GEMINI_MODEL = "models/gemini-2.5-flash"
 genai.configure(api_key=st.secret.GOOGLE_API_KEY)
 
 # ---------------- LOAD MODELS ----------------
-@st.cache_resource
+# @st.cache_resource
 def load_faiss():
     index = faiss.read_index(f"{INDEX_DIR}/index.faiss")
     with open(f"{INDEX_DIR}/metadata.json", "r", encoding="utf-8") as f:
