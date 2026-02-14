@@ -24,7 +24,12 @@ TOP_K = 5
 os.makedirs(INDEX_DIR, exist_ok=True)
 
 # One-time downloads
-nltk.download("punkt", quiet=True)
+@st.cache_resource
+def download_nltk():
+    nltk.download("punkt")
+    nltk.download("punkt_tab")
+
+download_nltk()
 
 # Tokenizer
 encoding = tiktoken.encoding_for_model(TOKEN_MODEL)
