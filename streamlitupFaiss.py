@@ -235,40 +235,31 @@ if uploaded_files and st.button("🚀 Ingest into FAISS"):
     )
     
 # ----------------------------------------------- CHATT UI ---------------------------------------------------------
+
 st.divider()
 st.subheader("💬 Ask questions about your PDFs")
-if index is None:
-    st.warning("Please ingest PDFs first to enable chat.")
-    st.stop()
-# Initialize chat history
-if "messages" not in st.session_state:
-    st.session_state.messages = []
-# Display chat history
-for msg in st.session_state.messages:
-    with st.chat_message(msg["role"]):
-        st.markdown(msg["content"])
-#Chat input
-user_query = st.chat_input("Ask a question about your documents...")
 
-if user_query:
-    # Show User message
-    st.session_state.messages.append({
-        "role": "user",
-        "content": user_query
-    })
-    with st.chat_message("user"):
-        st.markdown(user_query)
+if not st.session_state.faiss_loaded:
+    st.warning("Please ingest PDFs first.")
+else:
 
-    # Guard: FAISS not ready
-    if not st.session_state.get("faiss_loaded", False):
-        error_msg = "❌ Please ingest PDFs before asking questions."
+    # Show history
+    for msg in st.session_state.messages:
+        with st.chat_message(msg["role"]):
+            st.markdown(msg["content"])
+
+    user_query = st.chat_input("Ask a question...")
+
+    if user_query:
+
+        # Save user message
         st.session_state.messages.append({
-            "role": "assistant",
-            "content": error_msg
+            "role": "user",
+            "content": user_query
         })
-        with st.chat_message("assistant"):
-            st.error(error_msg)
-        st.stop()
+
+        with st.chat_message("user"):
+            st.markdown(user_query)
      # -------- RAG PIPELINE --------
     # Retrieve
     with st.spinner("🔍 Searching documents..."):
