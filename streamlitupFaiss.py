@@ -190,6 +190,7 @@ with col2:
     overlap_tokens = st.slider("Overlap tokens", 0, 200, 80)
 
 if uploaded_files and st.button("🚀 Ingest into FAISS"):
+    embedder = st.session_state.embedder
     all_chunks = []
     texts = []
 
