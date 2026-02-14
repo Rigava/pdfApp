@@ -11,9 +11,9 @@ from sentence_transformers import SentenceTransformer
 import numpy as np
 import google.genai as genai
 
-#Run it once
+#Run it once- one time download
 nltk.download('punkt_tab')
-# ------------------------------------------------- CONFIG for tokenisation and embedding-------------------------- ----------------
+# ------------------------------------------------- CONFIG for tokenisation and embedding-------------------------- -----------------------------------
 MODEL_NAME = "all-MiniLM-L6-v2"   # fast + excellent
 TOKEN_MODEL = "text-embedding-3-large"
 
@@ -116,11 +116,26 @@ def semantic_search(query, k=TOP_K):
         results.append(metadata[idx])
 
     return results
-# ---------------- LOAD INDEX ----------------
-if os.path.exists(f"{INDEX_DIR}/index.faiss"):
-    index, metadata = load_faiss()
-else:
-    index, metadata = None, None
+# ---------------- LOAD INDEX SESSION AT THE START ----------------
+# if os.path.exists(f"{INDEX_DIR}/index.faiss"):
+#     index, metadata = load_faiss()
+# else:
+#     index, metadata = None, None
+
+def init_session():
+
+    if "embedder" not in st.session_state:
+        st.session_state.embedder = load_embedder()
+
+    if "index" not in st.session_state:
+        index, metadata = load_faiss()
+        st.session_state.index = index
+        st.session_state.metadata = metadata
+
+    if "messages" not in st.session_state:
+        st.session_state.messages = []
+
+init_session()
 # ---------------- PROMPT ----------------
 def build_prompt(question, chunks):
     context = ""
@@ -155,7 +170,7 @@ def get_llm_response(prompt):
         contents=prompt
     )
     return response.text
-# ---------------- --------------------------------------------------------------STREAMLIT UI ----------------
+# ---------------- --------------------------------------------------------------STREAMLIT UI -------------------------------------------------------------
 st.set_page_config("PDF → FAISS Ingestion", layout="wide")
 st.title("📄 PDF → FAISS Vector DB (RAG Ready)")
 
@@ -207,88 +222,11 @@ if uploaded_files and st.button("🚀 Ingest into FAISS"):
 
     st.success(f"✅ Ingested {len(all_chunks)} chunks into FAISS")
     # CHAT SECTION
-    st.session_state.index, st.session_state.metadata = load_faiss()
-    st.session_state.embedder = load_embedder()
-    st.session_state.faiss_loaded = True
+    # st.session_state.index, st.session_state.metadata = load_faiss()
+    # st.session_state.embedder = load_embedder()
+    # st.session_state.faiss_loaded = True
 
 
-        # ----------------------------------------------- CHATT UI ---------------------------------------------------------
-    st.divider()
-    st.subheader("💬 Ask questions about your PDFs")
-    if index is None:
-        st.warning("Please ingest PDFs first to enable chat.")
-        st.stop()
-    # Initialize chat history
-    if "messages" not in st.session_state:
-        st.session_state.messages = []
-    # Display chat history
-    for msg in st.session_state.messages:
-        with st.chat_message(msg["role"]):
-            st.markdown(msg["content"])
-    #Chat input
-    user_query = st.chat_input("Ask a question about your documents...")
-    
-    if user_query:
-        # Show User message
-        st.session_state.messages.append({
-            "role": "user",
-            "content": user_query
-        })
-        with st.chat_message("user"):
-            st.markdown(user_query)
-    
-        # Guard: FAISS not ready
-        if not st.session_state.get("faiss_loaded", False):
-            error_msg = "❌ Please ingest PDFs before asking questions."
-            st.session_state.messages.append({
-                "role": "assistant",
-                "content": error_msg
-            })
-            with st.chat_message("assistant"):
-                st.error(error_msg)
-            st.stop()
-         # -------- RAG PIPELINE --------
-        # Retrieve
-        with st.spinner("🔍 Searching documents..."):
-            retrieved_chunks = semantic_search(user_query)
-        if not retrieved_chunks:
-            no_answer = "I couldn't find relevant information in the documents."
-            st.session_state.messages.append({
-                "role": "assistant",
-                "content": no_answer
-            })
-            with st.chat_message("assistant"):
-                st.markdown(no_answer)
-            st.stop()
-    
-        # Build prompt
-        prompt = build_prompt(user_query, retrieved_chunks)
-    
-        # ----------------------------------------------Generate answer with LLM CALL---------------------------------------------------
-        with st.spinner("🧠 Gemini is thinking..."):
-            response = get_llm_response(prompt)
-            # Gemini safety
-            answer = getattr(response, "text", None)
-            if not answer:
-                answer = "⚠️ I couldn't generate a response."
-    
-        # Save Assistant message
-        st.session_state.messages.append({
-            "role": "assistant",
-            "content": answer
-        })
-        # Display assistant response    
-        with st.chat_message("assistant"):
-            st.markdown(answer)
-    
-            # Optional: show sources used
-            with st.expander("📚 Sources"):
-                for i, c in enumerate(chunks, start=1):
-                    st.markdown(
-                        f"**Source {i}** — {c['source_file']} | "
-                        f"Pages {c['page_start']}–{c['page_end']} | "
-                        f"Section: {c['section']}"
-                    )
     st.download_button(
         "⬇️ Download metadata JSON",
         data=json.dumps(all_chunks, indent=2, ensure_ascii=False),
@@ -296,12 +234,80 @@ if uploaded_files and st.button("🚀 Ingest into FAISS"):
         mime="application/json"
     )
     
-#     #-----------------------------------------------LLM INITIATION-------------------------------------------------------
-# if "faiss_loaded" not in st.session_state:
-#     try:
-#         st.session_state.index, st.session_state.metadata = load_faiss()
-#         st.session_state.embedder = load_embedder()
-#         st.session_state.faiss_loaded = True
+# ----------------------------------------------- CHATT UI ---------------------------------------------------------
+st.divider()
+st.subheader("💬 Ask questions about your PDFs")
+if index is None:
+    st.warning("Please ingest PDFs first to enable chat.")
+    st.stop()
+# Initialize chat history
+if "messages" not in st.session_state:
+    st.session_state.messages = []
+# Display chat history
+for msg in st.session_state.messages:
+    with st.chat_message(msg["role"]):
+        st.markdown(msg["content"])
+#Chat input
+user_query = st.chat_input("Ask a question about your documents...")
 
-#     except:
-#         st.session_state.faiss_loaded = False
+if user_query:
+    # Show User message
+    st.session_state.messages.append({
+        "role": "user",
+        "content": user_query
+    })
+    with st.chat_message("user"):
+        st.markdown(user_query)
+
+    # Guard: FAISS not ready
+    if not st.session_state.get("faiss_loaded", False):
+        error_msg = "❌ Please ingest PDFs before asking questions."
+        st.session_state.messages.append({
+            "role": "assistant",
+            "content": error_msg
+        })
+        with st.chat_message("assistant"):
+            st.error(error_msg)
+        st.stop()
+     # -------- RAG PIPELINE --------
+    # Retrieve
+    with st.spinner("🔍 Searching documents..."):
+        retrieved_chunks = semantic_search(user_query)
+    if not retrieved_chunks:
+        no_answer = "I couldn't find relevant information in the documents."
+        st.session_state.messages.append({
+            "role": "assistant",
+            "content": no_answer
+        })
+        with st.chat_message("assistant"):
+            st.markdown(no_answer)
+        st.stop()
+
+    # Build prompt
+    prompt = build_prompt(user_query, retrieved_chunks)
+
+    # ----------------------------------------------Generate answer with LLM CALL---------------------------------------------------
+    with st.spinner("🧠 Gemini is thinking..."):
+        response = get_llm_response(prompt)
+        # Gemini safety
+        answer = getattr(response, "text", None)
+        if not answer:
+            answer = "⚠️ I couldn't generate a response."
+
+    # Save Assistant message
+    st.session_state.messages.append({
+        "role": "assistant",
+        "content": answer
+    })
+    # Display assistant response    
+    with st.chat_message("assistant"):
+        st.markdown(answer)
+
+        # Optional: show sources used
+        with st.expander("📚 Sources"):
+            for i, c in enumerate(chunks, start=1):
+                st.markdown(
+                    f"**Source {i}** — {c['source_file']} | "
+                    f"Pages {c['page_start']}–{c['page_end']} | "
+                    f"Section: {c['section']}"
+                )
