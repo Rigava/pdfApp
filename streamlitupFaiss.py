@@ -108,6 +108,9 @@ def load_embedder():
     return SentenceTransformer(MODEL_NAME)
 # ---------------- SEARCH ----------------
 def semantic_search(query, k=TOP_K):
+    embedder = st.session_state.embedder
+    index = st.session_state.index
+    metadata = st.session_state.metadata
     query_embedding = embedder.encode([query]).astype("float32")
     distances, indices = index.search(query_embedding, k)
 
