@@ -238,71 +238,71 @@ if uploaded_files and st.button("🚀 Ingest into FAISS"):
         mime="application/json"
     )
     
-# ----------------------------------------------- CHATT UI ---------------------------------------------------------
+# # ----------------------------------------------- CHATT UI ---------------------------------------------------------
 
-st.divider()
-st.subheader("💬 Ask questions about your PDFs")
+# st.divider()
+# st.subheader("💬 Ask questions about your PDFs")
 
-if not st.session_state.faiss_loaded:
-    st.warning("Please ingest PDFs first.")
-else:
+# if not st.session_state.faiss_loaded:
+#     st.warning("Please ingest PDFs first.")
+# else:
 
-    # Show history
-    for msg in st.session_state.messages:
-        with st.chat_message(msg["role"]):
-            st.markdown(msg["content"])
+#     # Show history
+#     for msg in st.session_state.messages:
+#         with st.chat_message(msg["role"]):
+#             st.markdown(msg["content"])
 
-    user_query = st.chat_input("Ask a question...")
+#     user_query = st.chat_input("Ask a question...")
 
-    if user_query:
+#     if user_query:
 
-        # Save user message
-        st.session_state.messages.append({
-            "role": "user",
-            "content": user_query
-        })
+#         # Save user message
+#         st.session_state.messages.append({
+#             "role": "user",
+#             "content": user_query
+#         })
 
-        with st.chat_message("user"):
-            st.markdown(user_query)
-     # -------- RAG PIPELINE --------
-    # Retrieve
-    with st.spinner("🔍 Searching documents..."):
-        retrieved_chunks = semantic_search(user_query)
-    if not retrieved_chunks:
-        no_answer = "I couldn't find relevant information in the documents."
-        st.session_state.messages.append({
-            "role": "assistant",
-            "content": no_answer
-        })
-        with st.chat_message("assistant"):
-            st.markdown(no_answer)
-        st.stop()
+#         with st.chat_message("user"):
+#             st.markdown(user_query)
+#      # -------- RAG PIPELINE --------
+#     # Retrieve
+#     with st.spinner("🔍 Searching documents..."):
+#         retrieved_chunks = semantic_search(user_query)
+#     if not retrieved_chunks:
+#         no_answer = "I couldn't find relevant information in the documents."
+#         st.session_state.messages.append({
+#             "role": "assistant",
+#             "content": no_answer
+#         })
+#         with st.chat_message("assistant"):
+#             st.markdown(no_answer)
+#         st.stop()
 
-    # Build prompt
-    prompt = build_prompt(user_query, retrieved_chunks)
+#     # Build prompt
+#     prompt = build_prompt(user_query, retrieved_chunks)
 
-    # ----------------------------------------------Generate answer with LLM CALL---------------------------------------------------
-    with st.spinner("🧠 Gemini is thinking..."):
-        response = get_llm_response(prompt)
-        # Gemini safety
-        answer = getattr(response, "text", None)
-        if not answer:
-            answer = "⚠️ I couldn't generate a response."
+#     # ----------------------------------------------Generate answer with LLM CALL---------------------------------------------------
+#     with st.spinner("🧠 Gemini is thinking..."):
+#         response = get_llm_response(prompt)
+#         # Gemini safety
+#         answer = getattr(response, "text", None)
+#         if not answer:
+#             answer = "⚠️ I couldn't generate a response."
 
-    # Save Assistant message
-    st.session_state.messages.append({
-        "role": "assistant",
-        "content": answer
-    })
-    # Display assistant response    
-    with st.chat_message("assistant"):
-        st.markdown(answer)
+#     # Save Assistant message
+#     st.session_state.messages.append({
+#         "role": "assistant",
+#         "content": answer
+#     })
+#     # Display assistant response    
+#     with st.chat_message("assistant"):
+#         st.markdown(answer)
 
-        # Optional: show sources used
-        with st.expander("📚 Sources"):
-            for i, c in enumerate(chunks, start=1):
-                st.markdown(
-                    f"**Source {i}** — {c['source_file']} | "
-                    f"Pages {c['page_start']}–{c['page_end']} | "
-                    f"Section: {c['section']}"
-                )
+#         # Optional: show sources used
+#         with st.expander("📚 Sources"):
+#             for i, c in enumerate(chunks, start=1):
+#                 st.markdown(
+#                     f"**Source {i}** — {c['source_file']} | "
+#                     f"Pages {c['page_start']}–{c['page_end']} | "
+#                     f"Section: {c['section']}"
+#                 )
